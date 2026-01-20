@@ -26,7 +26,7 @@ for (let i = 0; i < ROW; i++) {
   }
 }
 
-// print map
+// print map audio visualizer style
 for (i in map) {
   for (j in map[i]) {
     if (map[i][j] === 1) {
