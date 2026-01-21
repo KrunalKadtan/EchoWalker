@@ -1,23 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title></title>
-    <style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EchoWalker - The Blind Audio Maze</title>
+    <meta name="description" content="Navigate through darkness using 3D spatial audio">
+    <meta name="keywords" content="audio game, maze, accessibility, 3D audio, HRTF">
+    <meta name="authors" content="Krunal Kadtan, Vansh">
     
-    body {
-      margin: 0;
-    }
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        
+        <div id="loadingScreen">
+            <h1>🌊 EchoWalker 🌊</h1>
+            <p>Click anywhere to begin...</p>
+        </div>
+    </div>
 
-    canvas {
-        background: red;
-        border: 1px solid black;
-    }
-    </style>
-  </head>
-  <body>
-    <canvas></canvas>
-    <script src="main.js"></script>
-  </body>
+    <!-- Core Scripts -->
+    <script src="js/utils/raycasting.js"></script>
+    <script src="js/maze.js"></script>
+    <script src="js/audio/audioEngine.js"></script>
+    <script src="js/audio/oceanWaves.js"></script>
+    <script src="js/audio/sonar.js"></script>
+    <script src="js/audio/sounds.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/game.js"></script>
+</body>
 </html>
