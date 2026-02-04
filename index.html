@@ -15,6 +15,7 @@
         border: 1px solid black;
     }
     </style>
+
   </head>
   <body>
     <!-- Start Screen -->
@@ -53,6 +54,28 @@ border-radius: 10px; color: #fff; font-family: monospace;">
   <button id="restartBtn" style="background: #00ff00; color: #000; padding: 15px 30px;
   margin: 10px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">PLAY AGAIN</button>
 </div>
+<script>
+// UI Screen Logic (Vansh)
+document.getElementById('startBtn').addEventListener('click', () => {
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('levelSelect').style.display = 'block';
+});
+
+document.querySelectorAll('.difficulty-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('levelSelect').style.display = 'none';
+    const level = btn.getAttribute('data-level');
+    if (typeof startGame === 'function') startGame(level);
+  });
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  document.getElementById('victoryScreen').style.display = 'none';
+  document.getElementById('levelSelect').style.display = 'block';
+});
+
+console.log('UI Screens ready (Vansh)');
+</script>
 
     <canvas></canvas>
     <script src="main.js"></script>
