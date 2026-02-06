@@ -1,82 +1,123 @@
 /**
- * Fire a sonar ping and get wall distances
- * @param {Object} player - Player object {x, y, angle}
- * @param {Array} map - The maze map
- * @returns {Object} Distances in each direction
+ * Short-Range Echo Sonar (5 tiles max)
+ * Author: Krunal Kadtan
  */
+
+let sonarVisual = null;
+
+function createSonarVisual() {
+    if (sonarVisual) return;
+    
+    sonarVisual = document.createElement('div');
+    sonarVisual.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 350px;
+        padding: 30px;
+        background: rgba(0, 0, 0, 0.95);
+        border: 4px solid #0ff;
+        border-radius: 15px;
+        color: #0ff;
+        font-family: monospace;
+        font-size: 24px;
+        text-align: center;
+        display: none;
+        z-index: 4000;
+    `;
+    document.body.appendChild(sonarVisual);
+}
+
+function showSonarResult(distance) {
+    if (!sonarVisual) createSonarVisual();
+    
+    let status, color, instruction;
+    
+    if (distance < 0.8) {
+        status = '🚫 WALL!';
+        color = '#f00';
+        instruction = 'ROTATE NOW!';
+    } else if (distance < 1.5) {
+        status = '⚠️ VERY CLOSE';
+        color = '#ff4400';
+        instruction = 'TURN OR STOP';
+    } else if (distance < 3) {
+        status = '✓ CLEAR';
+        color = '#ffff00';
+        instruction = 'CAN MOVE FORWARD';
+    } else {
+        status = '✅ WIDE OPEN';
+        color = '#00ff00';
+        instruction = 'PATH IS CLEAR';
+    }
+    
+    sonarVisual.innerHTML = `
+        <div style="font-size: 36px; margin-bottom: 15px;">${status}</div>
+        <div style="font-size: 22px; color: ${color}; margin-bottom: 15px;">${distance.toFixed(1)} tiles</div>
+        <div style="font-size: 18px; color: #fff; background: rgba(0,255,255,0.2); padding: 12px; border-radius: 5px;">${instruction}</div>
+    `;
+    sonarVisual.style.borderColor = color;
+    sonarVisual.style.display = 'block';
+    
+    setTimeout(() => {
+        sonarVisual.style.display = 'none';
+    }, 2500);
+}
+
 function fireSonarPing(player, map) {
     const audioCtx = getAudioContext();
     if (!audioCtx) return null;
     
-    console.log('Sonar ping fired');
+    // Cast ray ONLY in front direction (max 5 tiles)
+    const frontDistance = castRay(player.x, player.y, player.angle, map, 5);
     
-    // Cast rays in 4 cardinal directions
-    const directions = [
-        { name: 'front', angle: 0, baseFreq: 600, pan: 0 },
-        { name: 'left', angle: 270, baseFreq: 450, pan: -0.8 },
-        { name: 'right', angle: 90, baseFreq: 750, pan: 0.8 },
-        { name: 'back', angle: 180, baseFreq: 300, pan: 0 }
-    ];
+    console.log(`📡 Sonar: ${frontDistance.toFixed(2)} tiles ahead (max range: 5 tiles)`);
     
-    const distances = {};
+    playEchoSonar(frontDistance);
+    showSonarResult(frontDistance);
     
-    directions.forEach(({ name, angle, baseFreq, pan }, index) => {
-        const absoluteAngle = (player.angle + angle) % 360;
-        const distance = castRay(player.x, player.y, absoluteAngle, map);
-        distances[name] = distance;
-        
-        console.log(`   ${name}: ${distance.toFixed(2)} tiles`);
-        
-        // Play audio ping with staggered timing
-        playDirectionalPing(distance, baseFreq, pan, index * 0.08);
-    });
-    
-    return distances;
+    return { front: frontDistance };
 }
 
-/**
- * Play a directional sonar ping
- * @param {number} distance - Distance to wall
- * @param {number} baseFreq - Base frequency for this direction
- * @param {number} pan - Stereo pan value (-1 to 1)
- * @param {number} delay - Delay before playing (seconds)
- */
-function playDirectionalPing(distance, baseFreq, pan, delay = 0) {
+function playEchoSonar(distance) {
     const audioCtx = getAudioContext();
     const master = getMasterGain();
-    const now = audioCtx.currentTime + delay;
+    const now = audioCtx.currentTime;
     
-    // Frequency modulation based on distance
-    // Closer walls = higher pitch
-    const freqMultiplier = Math.max(0.5, 1 - (distance / 20) * 0.8);
-    const freq = baseFreq * (0.5 + freqMultiplier);
+    // OUTGOING PING
+    const pingOut = audioCtx.createOscillator();
+    pingOut.type = 'sine';
+    pingOut.frequency.value = 1400;
     
-    // Volume modulation based on distance
-    // Closer walls = louder
-    const volume = Math.max(0.1, 1 - (distance / 20)) * 0.4;
+    const pingOutGain = audioCtx.createGain();
+    pingOutGain.gain.setValueAtTime(0.5, now);
+    pingOutGain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
     
-    // Create oscillator
-    const osc = audioCtx.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.value = freq;
+    pingOut.connect(pingOutGain);
+    pingOutGain.connect(master);
+    pingOut.start(now);
+    pingOut.stop(now + 0.06);
     
-    // Create gain envelope
-    const pingGain = audioCtx.createGain();
-    pingGain.gain.setValueAtTime(volume, now);
-    pingGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+    // ECHO - adjusted for 5 tile max range
+    const echoDelay = 0.1 + (distance / 5) * 0.4; // 0.1s to 0.5s
+    const echoTime = now + echoDelay;
     
-    // Create stereo panner
-    const panner = audioCtx.createStereoPanner();
-    panner.pan.value = pan;
+    const echoOsc = audioCtx.createOscillator();
+    echoOsc.type = 'sine';
+    echoOsc.frequency.value = 1200;
     
-    // Audio graph: osc -> gain -> panner -> master
-    osc.connect(pingGain);
-    pingGain.connect(panner);
-    panner.connect(master);
+    const echoGain = audioCtx.createGain();
+    const echoVolume = Math.max(0.2, 1 - (distance / 5)) * 0.4;
+    echoGain.gain.setValueAtTime(echoVolume, echoTime);
+    echoGain.gain.exponentialRampToValueAtTime(0.01, echoTime + 0.25);
     
-    // Play
-    osc.start(now);
-    osc.stop(now + 0.5);
+    echoOsc.connect(echoGain);
+    echoGain.connect(master);
+    echoOsc.start(echoTime);
+    echoOsc.stop(echoTime + 0.25);
+    
+    console.log(`  → Echo delay: ${(echoDelay * 1000).toFixed(0)}ms`);
 }
 
-console.log('Sonar system module loaded');
+console.log('✅ Sonar system loaded (5 tile range)');

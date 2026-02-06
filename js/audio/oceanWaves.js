@@ -1,71 +1,59 @@
+/**
+ * Ocean Wave Synthesis - Directional Audio Guide
+ * Author: Krunal Kadtan
+ */
+
 let exitPanner = null;
 let exitGain = null;
 let oceanWaveNodes = [];
 
-/**
- * Create the ocean wave soundscape at the exit position
- */
 function createOceanWaves() {
     const audioCtx = getAudioContext();
     const master = getMasterGain();
     
-    if (!audioCtx) {
-        console.error('Audio context not initialized');
-        return;
-    }
+    if (!audioCtx) return;
     
-    console.log('Creating ocean wave soundscape...');
+    console.log('🌊 Creating ocean wave soundscape...');
     
-    // Create 3D panner for spatial positioning
+    // 3D Panner for exit
     exitPanner = audioCtx.createPanner();
     exitPanner.panningModel = 'HRTF';
-    exitPanner.distanceModel = 'inverse';
-    exitPanner.refDistance = 3;
-    exitPanner.rolloffFactor = 1.5;
-    exitPanner.maxDistance = 1000;
+    exitPanner.distanceModel = 'linear';
+    exitPanner.refDistance = 1;
+    exitPanner.maxDistance = 500;
+    exitPanner.rolloffFactor = 1;
+    exitPanner.coneInnerAngle = 360;
+    exitPanner.coneOuterAngle = 360;
     
-    // Exit gain control
     exitGain = audioCtx.createGain();
-    exitGain.gain.value = 0.4;
+    exitGain.gain.value = 0.6; // Increased base volume
     
-    // Connect exit gain -> panner -> master
     exitGain.connect(exitPanner);
     exitPanner.connect(master);
     
-    // Create 3 wave layers with different characteristics
-    createWaveLayer(0.3, 200, 800, 0.4);   // Low rumble
-    createWaveLayer(0.5, 400, 1200, 0.3);  // Mid wash
-    createWaveLayer(0.8, 800, 2000, 0.2);  // High splash
+    // Create wave layers
+    createWaveLayer(0.3, 200, 800, 0.5);
+    createWaveLayer(0.5, 400, 1200, 0.4);
+    createWaveLayer(0.8, 800, 2000, 0.3);
     
-    console.log('Ocean waves created (3 layers)');
+    console.log('✅ Ocean waves created');
     
-    // Schedule random wave crashes
     scheduleWaveCrash();
 }
 
-/**
- * Create a single wave layer with LFO modulation
- * @param {number} lfoRate - LFO frequency in Hz
- * @param {number} minFreq - Minimum filter frequency
- * @param {number} maxFreq - Maximum filter frequency
- * @param {number} volume - Layer volume (0-1)
- */
 function createWaveLayer(lfoRate, minFreq, maxFreq, volume) {
     const audioCtx = getAudioContext();
     const noiseBuffer = getNoiseBuffer();
     
-    // Noise source (loops continuously)
     const noise = audioCtx.createBufferSource();
     noise.buffer = noiseBuffer;
     noise.loop = true;
     
-    // Bandpass filter for wave character
     const filter = audioCtx.createBiquadFilter();
     filter.type = 'bandpass';
     filter.frequency.value = (minFreq + maxFreq) / 2;
     filter.Q.value = 1;
     
-    // LFO for filter frequency modulation (wave motion)
     const lfo = audioCtx.createOscillator();
     lfo.frequency.value = lfoRate;
     const lfoGain = audioCtx.createGain();
@@ -74,7 +62,6 @@ function createWaveLayer(lfoRate, minFreq, maxFreq, volume) {
     lfo.connect(lfoGain);
     lfoGain.connect(filter.frequency);
     
-    // Amplitude LFO (creates swells)
     const ampLFO = audioCtx.createOscillator();
     ampLFO.frequency.value = lfoRate * 0.7;
     const ampLFOGain = audioCtx.createGain();
@@ -86,25 +73,17 @@ function createWaveLayer(lfoRate, minFreq, maxFreq, volume) {
     ampLFO.connect(ampLFOGain);
     ampLFOGain.connect(waveGain.gain);
     
-    // Audio graph: noise -> filter -> gain -> exit gain
     noise.connect(filter);
     filter.connect(waveGain);
     waveGain.connect(exitGain);
     
-    // Start all sources
     noise.start();
     lfo.start();
     ampLFO.start();
     
-    // Store references
-    oceanWaveNodes.push({ noise, filter, lfo, ampLFO, waveGain, lfoGain, ampLFOGain });
-    
-    console.log(`   Layer: ${minFreq}-${maxFreq}Hz @ ${lfoRate}Hz LFO, volume ${volume}`);
+    oceanWaveNodes.push({ noise, filter, lfo, ampLFO, waveGain });
 }
 
-/**
- * Schedule random wave crash sound effects
- */
 function scheduleWaveCrash() {
     const audioCtx = getAudioContext();
     const noiseBuffer = getNoiseBuffer();
@@ -116,35 +95,28 @@ function scheduleWaveCrash() {
     
     const now = audioCtx.currentTime;
     
-    // Create crash (high-frequency burst)
     const crash = audioCtx.createBufferSource();
     crash.buffer = noiseBuffer;
     
     const crashFilter = audioCtx.createBiquadFilter();
     crashFilter.type = 'highpass';
-    crashFilter.frequency.value = 1000;
+    crashFilter.frequency.value = 1200;
     
     const crashGain = audioCtx.createGain();
     crashGain.gain.setValueAtTime(0, now);
-    crashGain.gain.linearRampToValueAtTime(0.3, now + 0.2);
-    crashGain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+    crashGain.gain.linearRampToValueAtTime(0.4, now + 0.15);
+    crashGain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
     
     crash.connect(crashFilter);
     crashFilter.connect(crashGain);
     crashGain.connect(exitGain);
     
     crash.start(now);
-    crash.stop(now + 1.5);
+    crash.stop(now + 1.2);
     
-    // Schedule next crash (3-7 seconds later)
-    const nextCrash = 3000 + Math.random() * 4000;
-    setTimeout(scheduleWaveCrash, nextCrash);
+    setTimeout(scheduleWaveCrash, 2000 + Math.random() * 3000);
 }
 
-/**
- * Update 3D position of ocean sound based on exit location
- * @param {Object} exit - Exit coordinates {x, y}
- */
 function updateOceanPosition(exit) {
     if (!exitPanner) return;
     
@@ -153,12 +125,29 @@ function updateOceanPosition(exit) {
     exitPanner.positionZ.value = exit.y * TILE_SIZE;
 }
 
-/**
- * Get the exit panner for external use
- * @returns {PannerNode} The exit panner node
- */
+function updateOceanVolume(player, exit) {
+    if (!exitGain) return;
+    
+    const distance = Math.sqrt(
+        (player.x - exit.x) ** 2 + 
+        (player.y - exit.y) ** 2
+    );
+    
+    // Volume: far = 0.4, close = 1.0
+    const maxDist = 14;
+    const normalizedDist = Math.min(distance / maxDist, 1);
+    const targetVolume = 1.0 - (normalizedDist * 0.6);
+    
+    const audioCtx = getAudioContext();
+    const now = audioCtx.currentTime;
+    exitGain.gain.linearRampToValueAtTime(targetVolume, now + 0.3);
+}
+
 function getExitPanner() {
     return exitPanner;
 }
 
-console.log('Ocean waves module loaded');
+// Expose nodes for cleanup
+window.oceanWaveNodes = oceanWaveNodes;
+
+console.log('✅ Ocean waves module loaded');

@@ -15,7 +15,7 @@ const LEVELS = {
  * @returns {Array} 2D array representing the maze (0 = path, 1 = wall)
  */
 function generateMaze(size) {
-    console.log(`Generating ${size}×${size} maze...`);
+    console.log(`🔨 Generating ${size}×${size} maze...`);
     
     // Create map filled with walls
     let map = Array.from({ length: size }, () => new Array(size).fill(1));
@@ -61,8 +61,30 @@ function generateMaze(size) {
     // Start carving from (1, 1)
     carve(1, 1);
     
-    console.log('Maze generated successfully');
+    // CRITICAL FIX: Ensure start area (1,1) and surroundings are CLEAR
+    // This guarantees player can actually move
+    for (let y = 1; y <= 3; y++) {
+        for (let x = 1; x <= 3; x++) {
+            if (x < size && y < size) {
+                map[y][x] = 0; // Force open
+            }
+        }
+    }
+    
+    // CRITICAL FIX: Ensure exit area is CLEAR
+    for (let y = size - 4; y < size - 1; y++) {
+        for (let x = size - 4; x < size - 1; x++) {
+            if (x > 0 && y > 0) {
+                map[y][x] = 0; // Force open
+            }
+        }
+    }
+    
+    console.log('✅ Maze generated successfully');
+    console.log('   Start area (1-3, 1-3) forced open');
+    console.log('   Exit area forced open');
+    
     return map;
 }
 
-console.log('Maze module loaded');
+console.log('✅ Maze module loaded');

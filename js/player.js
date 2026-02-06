@@ -3,6 +3,65 @@ let currentMovementMode = 'walk';
 let isPlayerMoving = false;
 
 /**
+ * Check if a position is valid for movement
+ * Only checks buffer in the direction of movement
+ * @param {number} x - X position
+ * @param {number} y - Y position
+ * @param {number} oldX - Previous X position
+ * @param {number} oldY - Previous Y position
+ * @param {Array} map - The maze map
+ * @returns {boolean} True if position is valid
+ */
+function isValidPosition(x, y, oldX, oldY, map) {
+    // Check center tile
+    const mapX = Math.floor(x);
+    const mapY = Math.floor(y);
+    
+    if (mapX < 0 || mapX >= map[0].length || 
+        mapY < 0 || mapY >= map.length) {
+        return false;
+    }
+    
+    // Must be on a path (0)
+    if (map[mapY][mapX] !== 0) {
+        return false;
+    }
+    
+    // Calculate movement direction
+    const dx = x - oldX;
+    const dy = y - oldY;
+    
+    // Buffer zone - only check in direction of movement
+    const buffer = 0.25;
+    const fractionalX = x - mapX;
+    const fractionalY = y - mapY;
+    
+    // Only check buffers if moving in that direction
+    
+    // Moving left (dx < 0)
+    if (dx < 0 && fractionalX < buffer && mapX > 0) {
+        if (map[mapY][mapX - 1] === 1) return false;
+    }
+    
+    // Moving right (dx > 0)
+    if (dx > 0 && fractionalX > (1 - buffer) && mapX < map[0].length - 1) {
+        if (map[mapY][mapX + 1] === 1) return false;
+    }
+    
+    // Moving up (dy < 0)
+    if (dy < 0 && fractionalY < buffer && mapY > 0) {
+        if (map[mapY - 1][mapX] === 1) return false;
+    }
+    
+    // Moving down (dy > 0)
+    if (dy > 0 && fractionalY > (1 - buffer) && mapY < map.length - 1) {
+        if (map[mapY + 1][mapX] === 1) return false;
+    }
+    
+    return true;
+}
+
+/**
  * Move the player in a direction
  * @param {Object} player - Player object {x, y, angle}
  * @param {Array} map - The maze map
@@ -11,12 +70,12 @@ let isPlayerMoving = false;
  */
 function movePlayer(player, map, direction) {
     const speeds = {
-        creep: 0.25,
-        walk: 0.4,
-        run: 0.65
+        creep: 0.15,   // Very slow, precise
+        walk: 0.3,     // Normal movement
+        run: 0.5       // Fast movement
     };
     
-    const speed = speeds[currentMovementMode] || 0.4;
+    const speed = speeds[currentMovementMode] || 0.3;
     
     const oldX = player.x;
     const oldY = player.y;
@@ -33,23 +92,16 @@ function movePlayer(player, map, direction) {
         newY += dy;
     }
     
-    // Check collision
-    const mapX = Math.floor(newX);
-    const mapY = Math.floor(newY);
-    
-    // Check bounds and wall
-    if (mapX >= 0 && mapX < map[0].length && 
-        mapY >= 0 && mapY < map.length &&
-        map[mapY][mapX] !== 1) {
-        
-        // No collision - update position
+    // Check if new position is valid
+    if (isValidPosition(newX, newY, oldX, oldY, map)) {
+        // Move player
         player.x = newX;
         player.y = newY;
         isPlayerMoving = true;
         
         return { moved: true, collision: null };
     } else {
-        // Collision detected
+        // Real collision
         const collisionDir = detectCollisionDirection(oldX, oldY, newX, newY, player.angle);
         playCollisionSound();
         
@@ -63,7 +115,7 @@ function movePlayer(player, map, direction) {
  * @param {string} direction - 'left' or 'right'
  */
 function rotatePlayer(player, direction) {
-    const rotationSpeed = 4;
+    const rotationSpeed = 5;
     
     if (direction === 'left') {
         player.angle -= rotationSpeed;
@@ -88,16 +140,12 @@ function detectCollisionDirection(oldX, oldY, newX, newY, playerAngle) {
     const dx = newX - oldX;
     const dy = newY - oldY;
     
-    // Convert movement vector to angle
     const moveAngle = Math.atan2(dx, -dy) * 180 / Math.PI;
-    
-    // Calculate relative angle to player's facing direction
     let relativeAngle = moveAngle - playerAngle;
     relativeAngle = ((relativeAngle + 180) % 360) - 180;
     
     const absAngle = Math.abs(relativeAngle);
     
-    // Determine direction based on angle
     if (absAngle < 45) return 'front';
     if (absAngle > 135) return 'back';
     if (relativeAngle < 0) return 'left';
@@ -112,7 +160,7 @@ function setMovementMode(mode) {
     const validModes = ['creep', 'walk', 'run'];
     if (validModes.includes(mode)) {
         currentMovementMode = mode;
-        console.log(`Movement mode: ${mode}`);
+        console.log(`🏃 Movement mode: ${mode}`);
     }
 }
 
@@ -201,4 +249,4 @@ function initKeyboardControls(onMove, onRotate, onSonar, onModeChange) {
     console.log('⌨️ Keyboard controls initialized');
 }
 
-console.log('Player module loaded');
+console.log('✅ Player module loaded');

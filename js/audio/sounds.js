@@ -48,18 +48,21 @@ function startFootsteps(mode = 'walk') {
     stopFootsteps();
     
     const intervals = {
-        creep: 700,
-        walk: 500,
-        run: 300
+        creep: 800,   // Slower footsteps
+        walk: 500,    // Normal footsteps
+        run: 300      // Faster footsteps
     };
     
     const interval = intervals[mode] || 500;
     
     footstepInterval = setInterval(() => {
-        playFootstep();
+        // FIXED: Only play if actually moving
+        if (isMoving()) {
+            playFootstep();
+        }
     }, interval);
     
-    console.log(`Footsteps started (${mode} mode, ${interval}ms interval)`);
+    console.log(`👣 Footsteps started (${mode} mode, ${interval}ms interval)`);
 }
 
 /**
@@ -70,6 +73,15 @@ function stopFootsteps() {
         clearInterval(footstepInterval);
         footstepInterval = null;
     }
+}
+
+/**
+ * Restart footsteps with current mode
+ * Call this when movement mode changes
+ */
+function restartFootsteps() {
+    const currentMode = getMovementMode();
+    startFootsteps(currentMode);
 }
 
 /**
@@ -109,7 +121,7 @@ function playVictorySound() {
     
     if (!audioCtx) return;
     
-    console.log('Playing victory sound');
+    console.log('🎉 Playing victory sound');
     
     const now = audioCtx.currentTime;
     
@@ -152,4 +164,4 @@ function playVictorySound() {
     });
 }
 
-console.log('Sound effects module loaded');
+console.log('✅ Sound effects module loaded');
