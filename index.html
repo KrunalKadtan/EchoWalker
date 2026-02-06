@@ -1,33 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EchoWalker - The Blind Audio Maze</title>
-    <meta name="description" content="Navigate through darkness using 3D spatial audio">
-    <meta name="keywords" content="audio game, maze, accessibility, 3D audio, HRTF">
-    <meta name="authors" content="Krunal Kadtan, Vansh">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+    <style>
     
-    <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <div id="gameContainer">
-        
-        <div id="loadingScreen">
-            <h1>🌊 EchoWalker 🌊</h1>
-            <p>Click anywhere to begin...</p>
-        </div>
-    </div>
+    body {
+      margin: 0;
+    }
 
-    <!-- Core Scripts -->
-    <script src="js/utils/raycasting.js"></script>
-    <script src="js/maze.js"></script>
-    <script src="js/audio/audioEngine.js"></script>
-    <script src="js/audio/oceanWaves.js"></script>
-    <script src="js/audio/sonar.js"></script>
-    <script src="js/audio/sounds.js"></script>
-    <script src="js/player.js"></script>
-    <script src="js/game.js"></script>
-</body>
+    canvas {
+        background: red;
+        border: 1px solid black;
+    }
+    </style>
+
+  </head>
+  <body>
+    <!-- Start Screen -->
+<div id="startScreen" style="position: fixed; top: 50%; left: 50%;
+transform: translate(-50%, -50%); text-align: center; z-index: 10;
+background: rgba(0,0,0,0.95); padding: 40px; border: 2px solid #00ff00;
+border-radius: 10px; color: #fff; font-family: monospace;">
+  <h1 style="font-size: 48px; color: #00ff00; margin-bottom: 10px;">🌊 ECHOWALKER 🌊</h1>
+  <p style="color: #aaa;">Navigate using sound alone</p>
+  <button id="startBtn" style="background: #00ff00; color: #000; border: none;
+  padding: 15px 30px; font-size: 18px; margin-top: 20px; cursor: pointer;
+  border-radius: 5px; font-weight: bold;">CLICK TO BEGIN</button>
+</div>
+
+<!-- Level Select Screen -->
+<div id="levelSelect" style="display: none; position: fixed; top: 50%; left: 50%;
+transform: translate(-50%, -50%); text-align: center; z-index: 10;
+background: rgba(0,0,0,0.95); padding: 40px; border: 2px solid #00ff00;
+border-radius: 10px; color: #fff; font-family: monospace;">
+  <h2 style="color: #00ff00;">SELECT DIFFICULTY</h2>
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px;">
+    <button class="difficulty-btn" data-level="demo" style="background: #00ffff; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">DEMO (7×7)</button>
+    <button class="difficulty-btn" data-level="easy" style="background: #00ff00; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">EASY (11×11)</button>
+    <button class="difficulty-btn" data-level="medium" style="background: #ffff00; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">MEDIUM (15×15)</button>
+    <button class="difficulty-btn" data-level="hard" style="background: #ff8800; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">HARD (21×21)</button>
+  </div>
+</div>
+
+<!-- Victory Screen -->
+<div id="victoryScreen" style="display: none; position: fixed; top: 50%; left: 50%;
+transform: translate(-50%, -50%); text-align: center; z-index: 10;
+background: rgba(0,0,0,0.95); padding: 40px; border: 2px solid #00ff00;
+border-radius: 10px; color: #fff; font-family: monospace;">
+  <h2 style="color: #ffff00; font-size: 36px;">🎉 VICTORY! 🎉</h2>
+  <div id="stats" style="margin: 20px 0; color: #aaa;"></div>
+  <button id="restartBtn" style="background: #00ff00; color: #000; padding: 15px 30px;
+  margin: 10px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">PLAY AGAIN</button>
+</div>
+<script>
+// UI Screen Logic (Vansh)
+document.getElementById('startBtn').addEventListener('click', () => {
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('levelSelect').style.display = 'block';
+});
+
+document.querySelectorAll('.difficulty-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('levelSelect').style.display = 'none';
+    const level = btn.getAttribute('data-level');
+    if (typeof startGame === 'function') startGame(level);
+  });
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  document.getElementById('victoryScreen').style.display = 'none';
+  document.getElementById('levelSelect').style.display = 'block';
+});
+
+console.log('UI Screens ready (Vansh)');
+</script>
+
+    <canvas></canvas>
+    <script src="main.js"></script>
+  </body>
 </html>
