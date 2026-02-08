@@ -3,81 +3,243 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title></title>
+    <title>EchoWalker</title>
     <style>
-    
     body {
       margin: 0;
+      padding: 0;
+      background: #000;
+      overflow: hidden;
     }
-
     canvas {
-        background: red;
-        border: 1px solid black;
+      background: red;
+      border: 1px solid black;
+      position: relative;
+      z-index: 0;
     }
     </style>
-
   </head>
   <body>
+
+    <!-- Sonar Radar Display -->
+    <div id="sonarRadar" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 300px; height: 300px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 90;">
+      <canvas id="sonarCanvas" width="300" height="300"></canvas>
+    </div>
+
+    <!-- Sonar Distance Indicators -->
+    <div id="sonarFront" style="position: fixed; top: 80px; left: 50%; transform: translateX(-50%); font-size: 14px; color: #0ff; background: rgba(0,255,255,0.2); padding: 8px 12px; border-radius: 5px; opacity: 0; z-index: 95; font-family: monospace;">
+      ⬆ FRONT: <span></span>
+    </div>
+    <div id="sonarLeft" style="position: fixed; top: 50%; left: 80px; transform: translateY(-50%); font-size: 14px; color: #0ff; background: rgba(0,255,255,0.2); padding: 8px 12px; border-radius: 5px; opacity: 0; z-index: 95; font-family: monospace;">
+      ⬅ LEFT: <span></span>
+    </div>
+    <div id="sonarRight" style="position: fixed; top: 50%; right: 80px; transform: translateY(-50%); font-size: 14px; color: #0ff; background: rgba(0,255,255,0.2); padding: 8px 12px; border-radius: 5px; opacity: 0; z-index: 95; font-family: monospace;">
+      ➡ RIGHT: <span></span>
+    </div>
+    <div id="sonarBack" style="position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 14px; color: #0ff; background: rgba(0,255,255,0.2); padding: 8px 12px; border-radius: 5px; opacity: 0; z-index: 95; font-family: monospace;">
+      ⬇ BACK: <span></span>
+    </div>
+
     <!-- Start Screen -->
-<div id="startScreen" style="position: fixed; top: 50%; left: 50%;
-transform: translate(-50%, -50%); text-align: center; z-index: 10;
-background: rgba(0,0,0,0.95); padding: 40px; border: 2px solid #00ff00;
-border-radius: 10px; color: #fff; font-family: monospace;">
-  <h1 style="font-size: 48px; color: #00ff00; margin-bottom: 10px;">🌊 ECHOWALKER 🌊</h1>
-  <p style="color: #aaa;">Navigate using sound alone</p>
-  <button id="startBtn" style="background: #00ff00; color: #000; border: none;
-  padding: 15px 30px; font-size: 18px; margin-top: 20px; cursor: pointer;
-  border-radius: 5px; font-weight: bold;">CLICK TO BEGIN</button>
-</div>
+    <div id="startScreen" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 1000; background: rgba(0,0,0,0.95); padding: 40px; border: 2px solid #00ff00; border-radius: 10px; color: #fff; font-family: monospace;">
+      <h1 style="font-size: 48px; color: #00ff00; margin-bottom: 10px;">🌊 ECHOWALKER 🌊</h1>
+      <p style="color: #aaa;">Navigate using sound alone</p>
+      <button id="startBtn" style="background: #00ff00; color: #000; border: none; padding: 15px 30px; font-size: 18px; margin-top: 20px; cursor: pointer; border-radius: 5px; font-weight: bold;">CLICK TO BEGIN</button>
+    </div>
 
-<!-- Level Select Screen -->
-<div id="levelSelect" style="display: none; position: fixed; top: 50%; left: 50%;
-transform: translate(-50%, -50%); text-align: center; z-index: 10;
-background: rgba(0,0,0,0.95); padding: 40px; border: 2px solid #00ff00;
-border-radius: 10px; color: #fff; font-family: monospace;">
-  <h2 style="color: #00ff00;">SELECT DIFFICULTY</h2>
-  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px;">
-    <button class="difficulty-btn" data-level="demo" style="background: #00ffff; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">DEMO (7×7)</button>
-    <button class="difficulty-btn" data-level="easy" style="background: #00ff00; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">EASY (11×11)</button>
-    <button class="difficulty-btn" data-level="medium" style="background: #ffff00; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">MEDIUM (15×15)</button>
-    <button class="difficulty-btn" data-level="hard" style="background: #ff8800; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">HARD (21×21)</button>
-  </div>
-</div>
+    <!-- Level Select Screen -->
+    <div id="levelSelect" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 1000; background: rgba(0,0,0,0.95); padding: 40px; border: 2px solid #00ff00; border-radius: 10px; color: #fff; font-family: monospace;">
+      <h2 style="color: #00ff00;">SELECT DIFFICULTY</h2>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px;">
+        <button class="difficulty-btn" data-level="demo" style="background: #00ffff; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">DEMO (7×7)</button>
+        <button class="difficulty-btn" data-level="easy" style="background: #00ff00; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">EASY (11×11)</button>
+        <button class="difficulty-btn" data-level="medium" style="background: #ffff00; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">MEDIUM (15×15)</button>
+        <button class="difficulty-btn" data-level="hard" style="background: #ff8800; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">HARD (21×21)</button>
+      </div>
+    </div>
 
-<!-- Victory Screen -->
-<div id="victoryScreen" style="display: none; position: fixed; top: 50%; left: 50%;
-transform: translate(-50%, -50%); text-align: center; z-index: 10;
-background: rgba(0,0,0,0.95); padding: 40px; border: 2px solid #00ff00;
-border-radius: 10px; color: #fff; font-family: monospace;">
-  <h2 style="color: #ffff00; font-size: 36px;">🎉 VICTORY! 🎉</h2>
-  <div id="stats" style="margin: 20px 0; color: #aaa;"></div>
-  <button id="restartBtn" style="background: #00ff00; color: #000; padding: 15px 30px;
-  margin: 10px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">PLAY AGAIN</button>
-</div>
-<script>
-// UI Screen Logic (Vansh)
-document.getElementById('startBtn').addEventListener('click', () => {
-  document.getElementById('startScreen').style.display = 'none';
-  document.getElementById('levelSelect').style.display = 'block';
-});
+    <!-- Victory Screen -->
+    <div id="victoryScreen" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 1000; background: rgba(0,0,0,0.95); padding: 40px; border: 2px solid #00ff00; border-radius: 10px; color: #fff; font-family: monospace;">
+      <h2 style="color: #ffff00; font-size: 36px;">🎉 VICTORY! 🎉</h2>
+      <div id="stats" style="margin: 20px 0; color: #aaa;"></div>
+      <button id="restartBtn" style="background: #00ff00; color: #000; padding: 15px 30px; margin: 10px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">PLAY AGAIN</button>
+    </div>
 
-document.querySelectorAll('.difficulty-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.getElementById('levelSelect').style.display = 'none';
-    const level = btn.getAttribute('data-level');
-    if (typeof startGame === 'function') startGame(level);
-  });
-});
+    <!-- View Mode Indicator -->
+    <div id="viewModeIndicator" style="position: fixed; top: 20px; right: 20px; font-size: 18px; color: #0ff; background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 5px; z-index: 1000; font-family: monospace;">
+      VIEW: <span id="viewModeText">BLIND</span>
+    </div>
 
-document.getElementById('restartBtn').addEventListener('click', () => {
-  document.getElementById('victoryScreen').style.display = 'none';
-  document.getElementById('levelSelect').style.display = 'block';
-});
+    <!-- First Person Canvas -->
+    <canvas id="fppCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 1;"></canvas>
 
-console.log('UI Screens ready (Vansh)');
-</script>
+    <!-- Map Canvas -->
+    <canvas id="mapCanvas" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid #00ff00; display: none; z-index: 1;"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" style="position: fixed; top: 20px; left: 20px; font-size: 16px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 5px; border: 1px solid #0ff; display: none; z-index: 1000; font-family: monospace; color: #fff;">
+      <div>Level: <span id="levelDisplay">-</span></div>
+      <div>Mode: <span id="modeDisplay">Walking</span></div>
+      <div>Direction: <span id="angleDisplay">North</span></div>
+      <div>Distance: <span id="distanceDisplay">-</span></div>
+    </div>
 
     <canvas></canvas>
     <script src="main.js"></script>
+
+    <script>
+    // ── Task 1: UI Screen Logic (Vansh) ──
+    document.getElementById('startBtn').addEventListener('click', () => {
+      document.getElementById('startScreen').style.display = 'none';
+      document.getElementById('levelSelect').style.display = 'block';
+    });
+
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('levelSelect').style.display = 'none';
+        const level = btn.getAttribute('data-level');
+        if (typeof startGame === 'function') startGame(level);
+      });
+    });
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      document.getElementById('victoryScreen').style.display = 'none';
+      document.getElementById('levelSelect').style.display = 'block';
+    });
+
+    // ── Task 2: Sonar Visualization System (Vansh) ──
+    function drawSonarRadar(distances) {
+      const radar = document.getElementById('sonarRadar');
+      const canvas = document.getElementById('sonarCanvas');
+      const ctx = canvas.getContext('2d');
+      radar.style.opacity = '1';
+      const centerX = 150, centerY = 150, maxRadius = 120;
+      ctx.clearRect(0, 0, 300, 300);
+
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      for (let i = 1; i <= 3; i++) {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, (maxRadius / 3) * i, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY - maxRadius);
+      ctx.lineTo(centerX, centerY + maxRadius);
+      ctx.moveTo(centerX - maxRadius, centerY);
+      ctx.lineTo(centerX + maxRadius, centerY);
+      ctx.stroke();
+
+      const directions = [
+        { name: 'front', angle: -Math.PI / 2 },
+        { name: 'right', angle: 0 },
+        { name: 'back', angle: Math.PI / 2 },
+        { name: 'left', angle: Math.PI }
+      ];
+      directions.forEach(({ name, angle }) => {
+        const distance = distances[name] || 10;
+        const normalizedDist = Math.min(distance / 20, 1);
+        const barLength = normalizedDist * maxRadius;
+        const endX = centerX + Math.cos(angle) * barLength;
+        const endY = centerY + Math.sin(angle) * barLength;
+        const red = Math.floor(255 * (1 - normalizedDist));
+        const green = Math.floor(255 * normalizedDist);
+        ctx.strokeStyle = `rgb(${red}, ${green}, 0)`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.beginPath();
+        ctx.arc(endX, endY, 6, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.fillStyle = '#0ff';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      updateSonarText(distances);
+      setTimeout(() => {
+        radar.style.opacity = '0';
+        hideTextIndicators();
+      }, 2000);
+    }
+
+    function updateSonarText(distances) {
+      const indicators = {
+        front: document.getElementById('sonarFront'),
+        left: document.getElementById('sonarLeft'),
+        right: document.getElementById('sonarRight'),
+        back: document.getElementById('sonarBack')
+      };
+      Object.keys(distances).forEach(dir => {
+        const distance = distances[dir];
+        const indicator = indicators[dir];
+        if (!indicator) return;
+        const span = indicator.querySelector('span');
+        let text;
+        if (distance < 1) text = '⚠️ VERY CLOSE!';
+        else if (distance < 3) text = `${distance.toFixed(1)} tiles (CLOSE)`;
+        else if (distance < 8) text = `${distance.toFixed(1)} tiles`;
+        else text = 'Far away';
+        span.textContent = text;
+        indicator.style.opacity = '1';
+      });
+    }
+
+    function hideTextIndicators() {
+      ['sonarFront', 'sonarLeft', 'sonarRight', 'sonarBack'].forEach(id => {
+        document.getElementById(id).style.opacity = '0';
+      });
+    }
+
+    // ── Task 3: View Mode System (Vansh) ──
+    let viewMode = 'blind';
+
+    function cycleViewMode() {
+      const modes = ['blind', 'fpp', 'map'];
+      const currentIndex = modes.indexOf(viewMode);
+      viewMode = modes[(currentIndex + 1) % modes.length];
+      updateViewMode();
+    }
+
+    function updateViewMode() {
+      const viewText = document.getElementById('viewModeText');
+      const fppCanvas = document.getElementById('fppCanvas');
+      const mapCanvas = document.getElementById('mapCanvas');
+      const hud = document.getElementById('hud');
+      fppCanvas.style.display = 'none';
+      mapCanvas.style.display = 'none';
+      hud.style.display = 'none';
+      switch(viewMode) {
+        case 'blind':
+          viewText.textContent = 'BLIND';
+          break;
+        case 'fpp':
+          fppCanvas.style.display = 'block';
+          hud.style.display = 'block';
+          viewText.textContent = 'FIRST-PERSON';
+          break;
+        case 'map':
+          mapCanvas.style.display = 'block';
+          hud.style.display = 'block';
+          viewText.textContent = 'MAP';
+          break;
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'v') cycleViewMode();
+    });
+
+    console.log('UI Screens ready (Vansh)');
+    console.log('Sonar visualization system ready (Vansh)');
+    console.log('View mode system ready (Vansh)');
+    </script>
+
   </body>
 </html>
