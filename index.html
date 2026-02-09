@@ -84,6 +84,14 @@
       <div>Distance: <span id="distanceDisplay">-</span></div>
     </div>
 
+    <!-- Task 4: Collision Flash Overlays -->
+    <div id="collisionOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100;">
+      <div id="collisionFront" style="position: absolute; top: 30%; left: 50%; transform: translateX(-50%); width: 300px; height: 400px; background: radial-gradient(circle, rgba(255,0,0,0.8) 0%, rgba(255,0,0,0) 70%); opacity: 0; transition: opacity 0.1s;"></div>
+      <div id="collisionLeft" style="position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 400px; height: 300px; background: radial-gradient(circle, rgba(255,0,0,0.8) 0%, rgba(255,0,0,0) 70%); opacity: 0; transition: opacity 0.1s;"></div>
+      <div id="collisionRight" style="position: absolute; top: 50%; right: 0; transform: translateY(-50%); width: 400px; height: 300px; background: radial-gradient(circle, rgba(255,0,0,0.8) 0%, rgba(255,0,0,0) 70%); opacity: 0; transition: opacity 0.1s;"></div>
+      <div id="collisionBack" style="position: absolute; bottom: 30%; left: 50%; transform: translateX(-50%); width: 300px; height: 400px; background: radial-gradient(circle, rgba(255,0,0,0.8) 0%, rgba(255,0,0,0) 70%); opacity: 0; transition: opacity 0.1s;"></div>
+    </div>
+
     <canvas></canvas>
     <script src="main.js"></script>
 
@@ -236,9 +244,25 @@
       if (e.key.toLowerCase() === 'v') cycleViewMode();
     });
 
+    // ── Task 4: Collision Visual Feedback (Vansh) ──
+    function showCollisionFlash(direction) {
+      const flashElements = {
+        front: document.getElementById('collisionFront'),
+        left: document.getElementById('collisionLeft'),
+        right: document.getElementById('collisionRight'),
+        back: document.getElementById('collisionBack')
+      };
+      const element = flashElements[direction];
+      if (element) {
+        element.style.opacity = '1';
+        setTimeout(() => { element.style.opacity = '0'; }, 300);
+      }
+    }
+
     console.log('UI Screens ready (Vansh)');
     console.log('Sonar visualization system ready (Vansh)');
     console.log('View mode system ready (Vansh)');
+    console.log('Collision feedback system ready (Vansh)');
     </script>
 
   </body>
