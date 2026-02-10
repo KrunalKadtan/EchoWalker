@@ -84,7 +84,7 @@
       <div>Distance: <span id="distanceDisplay">-</span></div>
     </div>
 
-    <!-- Task 4: Collision Flash Overlays -->
+    <!-- Collision Flash Overlays -->
     <div id="collisionOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100;">
       <div id="collisionFront" style="position: absolute; top: 30%; left: 50%; transform: translateX(-50%); width: 300px; height: 400px; background: radial-gradient(circle, rgba(255,0,0,0.8) 0%, rgba(255,0,0,0) 70%); opacity: 0; transition: opacity 0.1s;"></div>
       <div id="collisionLeft" style="position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 400px; height: 300px; background: radial-gradient(circle, rgba(255,0,0,0.8) 0%, rgba(255,0,0,0) 70%); opacity: 0; transition: opacity 0.1s;"></div>
@@ -259,10 +259,41 @@
       }
     }
 
+    // ── Task 5: HUD Update System (Vansh) ──
+    function updateHUD() {
+      if (viewMode === 'blind') return;
+      if (typeof gameState === 'undefined') return;
+
+      if (typeof LEVELS !== 'undefined' && gameState.currentLevel) {
+        document.getElementById('levelDisplay').textContent =
+          LEVELS[gameState.currentLevel]?.name || gameState.currentLevel;
+      }
+
+      const modeNames = { creep: 'Creeping', walk: 'Walking', run: 'Running' };
+      document.getElementById('modeDisplay').textContent =
+        modeNames[gameState.movementMode] || 'Walking';
+
+      const directionNames = ['North', 'NE', 'East', 'SE', 'South', 'SW', 'West', 'NW'];
+      const dirIndex = Math.round((gameState.player?.angle || 0) / 45) % 8;
+      document.getElementById('angleDisplay').textContent =
+        `${directionNames[dirIndex]} (${Math.round(gameState.player?.angle || 0)}°)`;
+
+      if (gameState.player && gameState.exit) {
+        const dist = Math.sqrt(
+          (gameState.player.x - gameState.exit.x) ** 2 +
+          (gameState.player.y - gameState.exit.y) ** 2
+        );
+        document.getElementById('distanceDisplay').textContent = dist.toFixed(1) + ' tiles';
+      }
+    }
+
+    setInterval(() => { updateHUD(); }, 100);
+
     console.log('UI Screens ready (Vansh)');
     console.log('Sonar visualization system ready (Vansh)');
     console.log('View mode system ready (Vansh)');
     console.log('Collision feedback system ready (Vansh)');
+    console.log('HUD system ready (Vansh)');
     </script>
 
   </body>
