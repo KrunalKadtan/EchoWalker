@@ -116,7 +116,14 @@ function winGame() {
     playVictorySound();
     
     setTimeout(() => {
-        alert(`🎉 VICTORY! 🎉\n\nTime: ${elapsedTime}s\nSteps: ${gameState.steps}\nSonar: ${gameState.pings}\nCollisions: ${gameState.collisions}\n\nExcellent navigation!`);
+        const statsElem = document.getElementById('stats');
+        if (statsElem) {
+            statsElem.innerHTML = `Time: ${elapsedTime}s<br>Steps: ${gameState.steps}<br>Sonar: ${gameState.pings}<br>Collisions: ${gameState.collisions}`;
+        }
+        const victoryScreen = document.getElementById('victoryScreen');
+        if (victoryScreen) {
+            victoryScreen.style.display = 'block';
+        }
     }, 1000);
 }
 
@@ -289,7 +296,7 @@ function gameLoop(currentTime) {
     requestAnimationFrame(gameLoop);
 }
 
-function startGame() {
+function startGame(level = 'easy') {
     console.log('🌊 ECHOWALKER - The Blind Audio Maze');
     console.log('By: Krunal Kadtan & Vansh');
     console.log('');
@@ -307,51 +314,48 @@ function startGame() {
     console.log('');
     console.log('🎧 Put on headphones and click to start...');
     
-    document.addEventListener('click', () => {
-        const loadingScreen = document.getElementById('loadingScreen');
+    if (!getAudioContext()) {
+        initAudio();
         
-        if (!getAudioContext()) {
-            initAudio();
+        setTimeout(() => {
+            createOceanWaves();
+            initializeGame(level);
+            if (!mapCanvas) createMapCanvas();
             
-            setTimeout(() => {
-                createOceanWaves();
-                initializeGame('easy');
-                createMapCanvas();
-                
-                initKeyboardControls(
-                    (direction) => {
-                        const result = movePlayer(gameState.player, gameState.map, direction);
-                        if (result.moved) {
-                            gameState.steps++;
-                        } else {
-                            gameState.collisions++;
-                        }
-                    },
-                    (direction) => {
-                        rotatePlayer(gameState.player, direction);
-                    },
-                    () => {
-                        gameState.pings++;
-                        fireSonarPing(gameState.player, gameState.map);
-                    },
-                    (newMode) => {
-                        restartFootsteps();
+            initKeyboardControls(
+                (direction) => {
+                    const result = movePlayer(gameState.player, gameState.map, direction);
+                    if (result.moved) {
+                        gameState.steps++;
+                    } else {
+                        gameState.collisions++;
                     }
-                );
-                
-                startFootsteps(getMovementMode());
-                requestAnimationFrame(gameLoop);
-                
-                if (loadingScreen) {
-                    loadingScreen.classList.add('hidden');
+                },
+                (direction) => {
+                    rotatePlayer(gameState.player, direction);
+                },
+                () => {
+                    gameState.pings++;
+                    fireSonarPing(gameState.player, gameState.map);
+                },
+                (newMode) => {
+                    restartFootsteps();
                 }
-                
-                console.log('✅ Game started!');
-                console.log('💡 Press SPACEBAR for sonar');
-            }, 100);
-        }
-    }, { once: true });
+            );
+            
+            startFootsteps(getMovementMode());
+            requestAnimationFrame(gameLoop);
+            
+            console.log('✅ Game started!');
+            console.log('💡 Press SPACEBAR for sonar');
+        }, 100);
+    } else {
+        setTimeout(() => {
+            initializeGame(level);
+            startFootsteps(getMovementMode());
+            console.log('✅ Game restarted!');
+        }, 100);
+    }
 }
 
-window.addEventListener('load', startGame);
 console.log('✅ Game module loaded');
