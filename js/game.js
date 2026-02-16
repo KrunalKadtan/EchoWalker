@@ -351,6 +351,12 @@ function startGame(level = 'easy') {
         }, 100);
     } else {
         setTimeout(() => {
+            const master = getMasterGain();
+            if (master) {
+                const audioCtx = getAudioContext();
+                master.gain.setValueAtTime(0.8, audioCtx.currentTime);
+            }
+            createOceanWaves();
             initializeGame(level);
             startFootsteps(getMovementMode());
             console.log('✅ Game restarted!');

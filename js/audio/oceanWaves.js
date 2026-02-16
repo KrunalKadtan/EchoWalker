@@ -6,8 +6,12 @@
 let exitPanner = null;
 let exitGain = null;
 let oceanWaveNodes = [];
+let waveCrashTimeout = null;
 
 function createOceanWaves() {
+    if (waveCrashTimeout) clearTimeout(waveCrashTimeout);
+    oceanWaveNodes = [];
+    window.oceanWaveNodes = oceanWaveNodes;
     const audioCtx = getAudioContext();
     const master = getMasterGain();
     
@@ -89,7 +93,7 @@ function scheduleWaveCrash() {
     const noiseBuffer = getNoiseBuffer();
     
     if (!audioCtx) {
-        setTimeout(scheduleWaveCrash, 3000);
+        waveCrashTimeout = setTimeout(scheduleWaveCrash, 3000);
         return;
     }
     
@@ -114,7 +118,7 @@ function scheduleWaveCrash() {
     crash.start(now);
     crash.stop(now + 1.2);
     
-    setTimeout(scheduleWaveCrash, 2000 + Math.random() * 3000);
+    waveCrashTimeout = setTimeout(scheduleWaveCrash, 2000 + Math.random() * 3000);
 }
 
 function updateOceanPosition(exit) {
