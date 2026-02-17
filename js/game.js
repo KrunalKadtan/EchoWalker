@@ -118,11 +118,17 @@ function winGame() {
     setTimeout(() => {
         const statsElem = document.getElementById('stats');
         if (statsElem) {
-            statsElem.innerHTML = `Time: ${elapsedTime}s<br>Steps: ${gameState.steps}<br>Sonar: ${gameState.pings}<br>Collisions: ${gameState.collisions}`;
+            statsElem.innerHTML = `
+                <div class="stat-item"><span class="stat-label">Time</span><span class="stat-value highlight">${elapsedTime}s</span></div>
+                <div class="stat-item"><span class="stat-label">Steps</span><span class="stat-value">${gameState.steps}</span></div>
+                <div class="stat-item"><span class="stat-label">Sonar Pings</span><span class="stat-value">${gameState.pings}</span></div>
+                <div class="stat-item"><span class="stat-label">Collisions</span><span class="stat-value ${gameState.collisions > 0 ? 'warning' : ''}">${gameState.collisions}</span></div>
+            `;
         }
         const victoryScreen = document.getElementById('victoryScreen');
         if (victoryScreen) {
-            victoryScreen.style.display = 'block';
+            victoryScreen.classList.remove('hidden');
+            victoryScreen.classList.add('fade-up');
         }
     }, 1000);
 }

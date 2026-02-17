@@ -4,68 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>EchoWalker - The Blind Audio Maze</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-
   </head>
   <body>
+    <!-- Animated Background -->
+    <div class="background-animation">
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring delay"></div>
+    </div>
+
     <!-- Start Screen -->
-<div id="startScreen" style="position: fixed; top: 50%; left: 50%;
-transform: translate(-50%, -50%); text-align: center; z-index: 10;
-background: rgba(0,0,0,0.95); padding: 40px; border: 2px solid #00ff00;
-border-radius: 10px; color: #fff; font-family: monospace;">
-  <h1 style="font-size: 48px; color: #00ff00; margin-bottom: 10px;">🌊 ECHOWALKER 🌊</h1>
-  <p style="color: #aaa;">Navigate using sound alone</p>
-  <button id="startBtn" style="background: #00ff00; color: #000; border: none;
-  padding: 15px 30px; font-size: 18px; margin-top: 20px; cursor: pointer;
-  border-radius: 5px; font-weight: bold;">CLICK TO BEGIN</button>
-</div>
+    <div id="startScreen" class="ui-screen fade-up">
+      <div class="glass-panel">
+        <div class="icon-header">🌊</div>
+        <h1>ECHOWALKER</h1>
+        <p class="subtitle">Navigate using sound alone</p>
+        <button id="startBtn" class="primary-btn">INITIALIZE SONAR</button>
+      </div>
+    </div>
 
-<!-- Level Select Screen -->
-<div id="levelSelect" style="display: none; position: fixed; top: 50%; left: 50%;
-transform: translate(-50%, -50%); text-align: center; z-index: 10;
-background: rgba(0,0,0,0.95); padding: 40px; border: 2px solid #00ff00;
-border-radius: 10px; color: #fff; font-family: monospace;">
-  <h2 style="color: #00ff00;">SELECT DIFFICULTY</h2>
-  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px;">
-    <button class="difficulty-btn" data-level="demo" style="background: #00ffff; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">DEMO (7×7)</button>
-    <button class="difficulty-btn" data-level="easy" style="background: #00ff00; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">EASY (11×11)</button>
-    <button class="difficulty-btn" data-level="medium" style="background: #ffff00; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">MEDIUM (15×15)</button>
-    <button class="difficulty-btn" data-level="hard" style="background: #ff8800; color: #000; padding: 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">HARD (21×21)</button>
-  </div>
-</div>
+    <!-- Level Select Screen -->
+    <div id="levelSelect" class="ui-screen hidden">
+      <div class="glass-panel">
+        <h2>SELECT DIFFICULTY</h2>
+        <div class="difficulty-grid">
+          <button class="difficulty-btn demo" data-level="demo">DEMO <span class="size-badge">7×7</span></button>
+          <button class="difficulty-btn easy" data-level="easy">EASY <span class="size-badge">11×11</span></button>
+          <button class="difficulty-btn medium" data-level="medium">MEDIUM <span class="size-badge">15×15</span></button>
+          <button class="difficulty-btn hard" data-level="hard">HARD <span class="size-badge">21×21</span></button>
+        </div>
+      </div>
+    </div>
 
-<!-- Victory Screen -->
-<div id="victoryScreen" style="display: none; position: fixed; top: 50%; left: 50%;
-transform: translate(-50%, -50%); text-align: center; z-index: 10;
-background: rgba(0,0,0,0.95); padding: 40px; border: 2px solid #00ff00;
-border-radius: 10px; color: #fff; font-family: monospace;">
-  <h2 style="color: #ffff00; font-size: 36px;">🎉 VICTORY! 🎉</h2>
-  <div id="stats" style="margin: 20px 0; color: #aaa;"></div>
-  <button id="restartBtn" style="background: #00ff00; color: #000; padding: 15px 30px;
-  margin: 10px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">PLAY AGAIN</button>
-</div>
-<script>
-// UI Screen Logic (Vansh)
-document.getElementById('startBtn').addEventListener('click', () => {
-  document.getElementById('startScreen').style.display = 'none';
-  document.getElementById('levelSelect').style.display = 'block';
-});
+    <!-- Victory Screen -->
+    <div id="victoryScreen" class="ui-screen hidden">
+      <div class="glass-panel victory-panel">
+        <div class="icon-header victory-icon">🎉</div>
+        <h2>VICTORY!</h2>
+        <p class="subtitle">Signal Intercepted & Extraction Complete</p>
+        <div id="stats" class="stats-container"></div>
+        <button id="restartBtn" class="primary-btn">PLAY AGAIN</button>
+      </div>
+    </div>
+    
+    <script>
+    // UI Screen Logic (Modernized)
+    document.getElementById('startBtn').addEventListener('click', () => {
+      document.getElementById('startScreen').classList.add('fade-out');
+      setTimeout(() => {
+          document.getElementById('startScreen').classList.add('hidden');
+          const levelSelect = document.getElementById('levelSelect');
+          levelSelect.classList.remove('hidden');
+          levelSelect.classList.add('fade-up');
+      }, 300);
+    });
 
-document.querySelectorAll('.difficulty-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.getElementById('levelSelect').style.display = 'none';
-    const level = btn.getAttribute('data-level');
-    if (typeof startGame === 'function') startGame(level);
-  });
-});
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('levelSelect').classList.add('fade-out');
+        setTimeout(() => {
+            document.getElementById('levelSelect').classList.add('hidden');
+            const level = btn.getAttribute('data-level');
+            if (typeof startGame === 'function') startGame(level);
+        }, 300);
+      });
+    });
 
-document.getElementById('restartBtn').addEventListener('click', () => {
-  document.getElementById('victoryScreen').style.display = 'none';
-  document.getElementById('levelSelect').style.display = 'block';
-});
-
-console.log('UI Screens ready (Vansh)');
-</script>
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      const victoryScreen = document.getElementById('victoryScreen');
+      victoryScreen.classList.add('fade-out');
+      setTimeout(() => {
+          victoryScreen.classList.add('hidden');
+          victoryScreen.classList.remove('fade-out', 'fade-up');
+          
+          const levelSelect = document.getElementById('levelSelect');
+          levelSelect.classList.remove('hidden', 'fade-out');
+          levelSelect.classList.add('fade-up');
+      }, 300);
+    });
+    
+    console.log('Premium UI Screens loaded');
+    </script>
 
     <!-- Core Scripts -->
     <script src="js/utils/raycasting.js"></script>
