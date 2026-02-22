@@ -258,3 +258,72 @@ h2 {
     transform: translateY(-20px) !important;
     pointer-events: none;
 }
+
+/* ========== GAME HUD ========== */
+#gameHUD {
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 2rem;
+    background: transparent;
+}
+
+.hud-top-left {
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-family: monospace;
+    font-size: 1.2rem;
+    color: #e2e8f0;
+    text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+}
+
+.hud-item {
+    background: rgba(0, 255, 204, 0.05);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    border-left: 3px solid #00ffcc;
+    backdrop-filter: blur(5px);
+}
+
+.hud-small {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.hud-highlight {
+    color: #00ffcc;
+    font-weight: bold;
+}
+
+.hud-bottom-right {
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: #64748b;
+    background: rgba(0,0,0,0.5);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.vignette {
+    position: absolute;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.8) 100%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.ping-anim {
+    animation: pingFlash 0.5s ease-out;
+}
+
+@keyframes pingFlash {
+    0% { color: #fff; text-shadow: 0 0 20px #fff; }
+    100% { color: #00ffcc; text-shadow: 0 0 10px rgba(0,255,204,0.5); }
+}

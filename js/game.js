@@ -98,6 +98,12 @@ function winGame() {
     
     gameState.gameActive = false;
     
+    // Hide debug map if open so it doesn't block the Victory screen
+    showMap = false;
+    if (mapCanvas) {
+        mapCanvas.style.display = 'none';
+    }
+    
     // STOP ALL SOUNDS
     stopAllAudio();
     
@@ -130,6 +136,8 @@ function winGame() {
             victoryScreen.classList.remove('hidden');
             victoryScreen.classList.add('fade-up');
         }
+        const gameHUD = document.getElementById('gameHUD');
+        if (gameHUD) gameHUD.classList.add('hidden');
     }, 1000);
 }
 
@@ -170,11 +178,15 @@ function createMapCanvas() {
     mapCanvas = document.createElement('canvas');
     mapCanvas.style.cssText = `
         position: fixed;
-        top: 20px;
-        right: 20px;
-        border: 3px solid #00ff00;
-        background: #000;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 2px solid rgba(0, 255, 204, 0.3);
+        border-radius: 16px;
+        background: rgba(2, 10, 20, 0.95);
         z-index: 1000;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(0, 255, 204, 0.2);
+        backdrop-filter: blur(10px);
     `;
     document.body.appendChild(mapCanvas);
     mapCtx = mapCanvas.getContext('2d');
@@ -186,28 +198,42 @@ function drawDebugMap() {
     if (!showMap || !gameState.map || !mapCanvas) return;
     
     const mapSize = gameState.map.length;
-    const canvasSize = 450;
+    const canvasSize = 550;
     const cellSize = canvasSize / mapSize;
     
     mapCanvas.width = canvasSize;
     mapCanvas.height = canvasSize + 120;
     
-    mapCtx.fillStyle = '#000';
+    mapCtx.fillStyle = 'rgba(2, 10, 20, 0.95)';
     mapCtx.fillRect(0, 0, canvasSize, canvasSize + 120);
+    
+    mapCtx.shadowBlur = 10;
+    mapCtx.shadowColor = '#00ffcc';
+    mapCtx.lineWidth = 1;
     
     // Draw maze
     for (let y = 0; y < mapSize; y++) {
         for (let x = 0; x < mapSize; x++) {
             if (gameState.map[y][x] === 1) {
-                mapCtx.fillStyle = '#666';
+                mapCtx.strokeStyle = 'rgba(0, 255, 204, 0.4)';
+                mapCtx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                mapCtx.fillStyle = 'rgba(0, 255, 204, 0.05)';
                 mapCtx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
             }
         }
     }
     
     // Draw exit
-    mapCtx.fillStyle = '#0ff';
+    mapCtx.shadowColor = '#00aaff';
+    mapCtx.strokeStyle = '#00aaff';
+    mapCtx.fillStyle = 'rgba(0, 170, 255, 0.2)';
     mapCtx.fillRect(
+        (gameState.exit.x - 0.5) * cellSize,
+        (gameState.exit.y - 0.5) * cellSize,
+        cellSize * 1.5,
+        cellSize * 1.5
+    );
+    mapCtx.strokeRect(
         (gameState.exit.x - 0.5) * cellSize,
         (gameState.exit.y - 0.5) * cellSize,
         cellSize * 1.5,
@@ -220,22 +246,31 @@ function drawDebugMap() {
     const rayEndX = gameState.player.x + Math.sin(angleRad) * rayDist;
     const rayEndY = gameState.player.y - Math.cos(angleRad) * rayDist;
     
-    mapCtx.strokeStyle = rayDist < 1.5 ? '#f00' : '#0f0';
+    const grad = mapCtx.createLinearGradient(
+        gameState.player.x * cellSize, gameState.player.y * cellSize,
+        rayEndX * cellSize, rayEndY * cellSize
+    );
+    const rayColor = rayDist < 1.5 ? '255, 80, 80' : '0, 255, 204';
+    grad.addColorStop(0, `rgba(${rayColor}, 0.9)`);
+    grad.addColorStop(1, `rgba(${rayColor}, 0.1)`);
+    
+    mapCtx.shadowColor = `rgba(${rayColor}, 0.8)`;
+    mapCtx.strokeStyle = grad;
     mapCtx.lineWidth = 3;
-    mapCtx.setLineDash([5, 5]);
+    mapCtx.setLineDash([]);
     mapCtx.beginPath();
     mapCtx.moveTo(gameState.player.x * cellSize, gameState.player.y * cellSize);
     mapCtx.lineTo(rayEndX * cellSize, rayEndY * cellSize);
     mapCtx.stroke();
-    mapCtx.setLineDash([]);
     
-    mapCtx.fillStyle = '#ff0';
+    mapCtx.fillStyle = `rgba(${rayColor}, 1)`;
     mapCtx.beginPath();
-    mapCtx.arc(rayEndX * cellSize, rayEndY * cellSize, 5, 0, Math.PI * 2);
+    mapCtx.arc(rayEndX * cellSize, rayEndY * cellSize, 4, 0, Math.PI * 2);
     mapCtx.fill();
     
     // Draw player
-    mapCtx.fillStyle = '#0f0';
+    mapCtx.shadowColor = '#00ffcc';
+    mapCtx.fillStyle = '#00ffcc';
     mapCtx.beginPath();
     mapCtx.arc(
         gameState.player.x * cellSize,
@@ -251,12 +286,15 @@ function drawDebugMap() {
     const endX = gameState.player.x * cellSize + Math.sin(angleRad) * lineLength;
     const endY = gameState.player.y * cellSize - Math.cos(angleRad) * lineLength;
     
-    mapCtx.strokeStyle = '#ff0';
-    mapCtx.lineWidth = 4;
+    mapCtx.strokeStyle = '#fff';
+    mapCtx.lineWidth = 2;
     mapCtx.beginPath();
     mapCtx.moveTo(gameState.player.x * cellSize, gameState.player.y * cellSize);
     mapCtx.lineTo(endX, endY);
     mapCtx.stroke();
+    
+    // Reset shadow for text
+    mapCtx.shadowBlur = 0;
     
     // Info text
     const dist = Math.sqrt(
@@ -264,19 +302,15 @@ function drawDebugMap() {
         (gameState.player.y - gameState.exit.y) ** 2
     );
     
-    mapCtx.fillStyle = '#0f0';
+    mapCtx.fillStyle = '#00ffcc';
     mapCtx.font = 'bold 16px monospace';
-    const y0 = canvasSize + 20;
-    mapCtx.fillText(`Pos: (${gameState.player.x.toFixed(1)}, ${gameState.player.y.toFixed(1)})`, 10, y0);
-    mapCtx.fillText(`Angle: ${Math.round(gameState.player.angle)}° | Sonar: ${rayDist.toFixed(1)}t`, 10, y0 + 25);
-    mapCtx.fillText(`Steps: ${gameState.steps} | Pings: ${gameState.pings}`, 10, y0 + 50);
+    const y0 = canvasSize + 25;
+    mapCtx.fillText(`Pos: (${gameState.player.x.toFixed(1)}, ${gameState.player.y.toFixed(1)})`, 15, y0);
+    mapCtx.fillText(`Angle: ${Math.round(gameState.player.angle)}° | Sonar: ${rayDist.toFixed(1)}t`, 15, y0 + 25);
+    mapCtx.fillText(`Steps: ${gameState.steps} | Pings: ${gameState.pings}`, 15, y0 + 50);
     
-    mapCtx.fillStyle = dist < 3 ? '#ff0' : '#0f0';
-    mapCtx.fillText(`🌊 EXIT: ${dist.toFixed(1)} tiles`, 10, y0 + 75);
-    
-    mapCtx.fillStyle = '#fff';
-    mapCtx.font = '13px monospace';
-    mapCtx.fillText('[M] Map | [SPACE] Sonar | [WASD] Move', 10, y0 + 100);
+    mapCtx.fillStyle = dist < 3 ? '#00aaff' : '#00ffcc';
+    mapCtx.fillText(`🌊 EXIT: ${dist.toFixed(1)} tiles`, 15, y0 + 75);
 }
 
 document.addEventListener('keydown', (e) => {
@@ -295,11 +329,19 @@ function gameLoop(currentTime) {
             updateListenerPosition();
             checkWinCondition();
             drawDebugMap();
+            updateHUD();
         }
         lastUpdateTime = currentTime;
     }
     
     requestAnimationFrame(gameLoop);
+}
+
+function updateHUD() {
+    const modeSpan = document.getElementById('hud-mode');
+    if (modeSpan && typeof getMovementMode === 'function') {
+        modeSpan.textContent = getMovementMode().toUpperCase();
+    }
 }
 
 function startGame(level = 'easy') {
@@ -343,6 +385,14 @@ function startGame(level = 'easy') {
                 () => {
                     gameState.pings++;
                     fireSonarPing(gameState.player, gameState.map);
+                    const pingSpan = document.getElementById('hud-ping');
+                    if (pingSpan) {
+                        pingSpan.textContent = 'PINGING...';
+                        pingSpan.classList.remove('ping-anim');
+                        void pingSpan.offsetWidth;
+                        pingSpan.classList.add('ping-anim');
+                        setTimeout(() => pingSpan.textContent = 'READY', 500);
+                    }
                 },
                 (newMode) => {
                     restartFootsteps();
@@ -351,6 +401,9 @@ function startGame(level = 'easy') {
             
             startFootsteps(getMovementMode());
             requestAnimationFrame(gameLoop);
+            
+            const gameHUD = document.getElementById('gameHUD');
+            if (gameHUD) gameHUD.classList.remove('hidden');
             
             console.log('✅ Game started!');
             console.log('💡 Press SPACEBAR for sonar');
@@ -363,6 +416,9 @@ function startGame(level = 'easy') {
                 master.gain.setValueAtTime(0.8, audioCtx.currentTime);
             }
             createOceanWaves();
+            const gameHUD = document.getElementById('gameHUD');
+            if (gameHUD) gameHUD.classList.remove('hidden');
+            
             initializeGame(level);
             startFootsteps(getMovementMode());
             console.log('✅ Game restarted!');

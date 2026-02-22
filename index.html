@@ -40,6 +40,18 @@
       </div>
     </div>
 
+    <!-- Game HUD -->
+    <div id="gameHUD" class="ui-screen hidden" style="pointer-events: none; z-index: 5;">
+      <div class="hud-top-left">
+        <div class="hud-item">MODE: <span id="hud-mode" class="hud-highlight">WALK</span></div>
+        <div class="hud-item hud-small">SONAR: <span id="hud-ping">READY</span></div>
+      </div>
+      <div class="hud-bottom-right">
+        [M] MAP | [SPACE] SONAR | [Q] SPEED | [WASD] MOVE
+      </div>
+      <div class="vignette"></div>
+    </div>
+
     <!-- Victory Screen -->
     <div id="victoryScreen" class="ui-screen hidden">
       <div class="glass-panel victory-panel">
