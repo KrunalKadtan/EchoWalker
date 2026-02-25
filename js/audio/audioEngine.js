@@ -1,6 +1,8 @@
 let audioContext = null;
 let masterGain = null;
 let waveNoiseBuffer = null;
+let reverbNode = null;
+let reverbGain = null;
 
 /**
  * Initialize the Web Audio API context
@@ -16,6 +18,15 @@ function initAudio() {
     masterGain = audioContext.createGain();
     masterGain.gain.value = 0.8;
     masterGain.connect(audioContext.destination);
+    
+    // Create Reverb System
+    reverbNode = audioContext.createConvolver();
+    reverbGain = audioContext.createGain();
+    reverbGain.gain.value = 0.5; // Wet mix
+    
+    createReverbBuffer();
+    reverbNode.connect(reverbGain);
+    reverbGain.connect(masterGain);
     
     console.log('Audio context initialized');
     console.log(`Sample rate: ${audioContext.sampleRate}Hz`);
@@ -64,6 +75,27 @@ function getMasterGain() {
  */
 function getNoiseBuffer() {
     return waveNoiseBuffer;
+}
+
+function getReverbNode() {
+    return reverbNode;
+}
+
+function createReverbBuffer() {
+    const duration = 2.5; // 2.5 seconds of decay
+    const sampleRate = audioContext.sampleRate;
+    const length = sampleRate * duration;
+    const impulse = audioContext.createBuffer(2, length, sampleRate);
+    
+    for (let channel = 0; channel < 2; channel++) {
+        const channelData = impulse.getChannelData(channel);
+        for (let i = 0; i < length; i++) {
+            // White noise exponentially decaying
+            channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 4);
+        }
+    }
+    reverbNode.buffer = impulse;
+    console.log('🔊 Synthetic cavern reverb generated');
 }
 
 console.log('Audio engine module loaded');

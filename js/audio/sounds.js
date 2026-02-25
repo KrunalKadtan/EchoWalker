@@ -36,6 +36,9 @@ function playFootstep() {
     filter.connect(footGain);
     footGain.connect(master);
     
+    const reverb = getReverbNode();
+    if (reverb) footGain.connect(reverb);
+    
     noise.start(now);
     noise.stop(now + 0.08);
 }
@@ -107,6 +110,9 @@ function playCollisionSound() {
     
     osc.connect(collisionGain);
     collisionGain.connect(master);
+    
+    const reverb = getReverbNode();
+    if (reverb) collisionGain.connect(reverb);
     
     osc.start(now);
     osc.stop(now + 0.1);
