@@ -396,6 +396,10 @@ function startGame(level = 'easy') {
                 },
                 (newMode) => {
                     restartFootsteps();
+                    console.log(`Speed updated to: ${newMode}`);
+                    if (typeof playModeChangeSound === 'function') {
+                        playModeChangeSound(newMode);
+                    }
                 }
             );
             

@@ -170,4 +170,39 @@ function playVictorySound() {
     });
 }
 
+/**
+ * Play UI sound when switching movement modes
+ * @param {string} mode - 'creep', 'walk', 'run'
+ */
+function playModeChangeSound(mode) {
+    const audioCtx = getAudioContext();
+    const master = getMasterGain();
+    if (!audioCtx || !master) return;
+    
+    const now = audioCtx.currentTime;
+    
+    let count = 1;
+    let pitch = 800; // Creep
+    if (mode === 'walk') { count = 2; pitch = 1000; }
+    if (mode === 'run') { count = 3; pitch = 1200; }
+    
+    for (let i = 0; i < count; i++) {
+        const timeOffset = now + i * 0.12;
+        const osc = audioCtx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(pitch, timeOffset);
+        osc.frequency.exponentialRampToValueAtTime(pitch * 0.5, timeOffset + 0.05);
+        
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.2, timeOffset);
+        gain.gain.exponentialRampToValueAtTime(0.01, timeOffset + 0.05);
+        
+        osc.connect(gain);
+        gain.connect(master);
+        
+        osc.start(timeOffset);
+        osc.stop(timeOffset + 0.05);
+    }
+}
+
 console.log('✅ Sound effects module loaded');
