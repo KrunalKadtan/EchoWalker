@@ -19,7 +19,18 @@ let gameState = {
 let lastUpdateTime = 0;
 const UPDATE_INTERVAL = 16;
 
-let showMap = true;
+const FALLBACK_LEVEL = `
+1111111
+1000001
+1011101
+1001001
+1101011
+1000001
+1111111
+`.trim();
+
+let showMap = false;
+let lastFootstepTime = 0;
 let mapCanvas = null;
 let mapCtx = null;
 
@@ -330,6 +341,23 @@ function gameLoop(currentTime) {
             checkWinCondition();
             drawDebugMap();
             updateHUD();
+            
+            // Instantly responsive footsteps physics
+            if (typeof isMoving === 'function') {
+                if (isMoving()) {
+                    let interval = 500;
+                    const mode = getMovementMode();
+                    if (mode === 'creep') interval = 800;
+                    if (mode === 'run') interval = 300;
+                    
+                    if (currentTime - lastFootstepTime > interval) {
+                        if (typeof playFootstep === 'function') playFootstep();
+                        lastFootstepTime = currentTime;
+                    }
+                } else {
+                    lastFootstepTime = 0; // Reset tracking immediately to ensure first step plays instantly
+                }
+            }
         }
         lastUpdateTime = currentTime;
     }
@@ -367,7 +395,6 @@ function startGame(level = 'easy') {
         
         setTimeout(() => {
             createOceanWaves();
-            initializeGame(level);
             if (!mapCanvas) createMapCanvas();
             
             initKeyboardControls(
@@ -395,15 +422,13 @@ function startGame(level = 'easy') {
                     }
                 },
                 (newMode) => {
-                    restartFootsteps();
                     console.log(`Speed updated to: ${newMode}`);
                     if (typeof playModeChangeSound === 'function') {
                         playModeChangeSound(newMode);
                     }
                 }
             );
-            
-            startFootsteps(getMovementMode());
+            initializeGame(level);
             requestAnimationFrame(gameLoop);
             
             const gameHUD = document.getElementById('gameHUD');
@@ -424,7 +449,6 @@ function startGame(level = 'easy') {
             if (gameHUD) gameHUD.classList.remove('hidden');
             
             initializeGame(level);
-            startFootsteps(getMovementMode());
             console.log('✅ Game restarted!');
         }, 100);
     }

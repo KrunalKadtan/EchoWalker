@@ -1,5 +1,3 @@
-let footstepInterval = null;
-
 /**
  * Play a single footstep sound
  */
@@ -43,49 +41,7 @@ function playFootstep() {
     noise.stop(now + 0.08);
 }
 
-/**
- * Start playing footsteps based on movement mode
- * @param {string} mode - Movement mode ('creep', 'walk', 'run')
- */
-function startFootsteps(mode = 'walk') {
-    stopFootsteps();
-    
-    const intervals = {
-        creep: 800,   // Slower footsteps
-        walk: 500,    // Normal footsteps
-        run: 300      // Faster footsteps
-    };
-    
-    const interval = intervals[mode] || 500;
-    
-    footstepInterval = setInterval(() => {
-        // FIXED: Only play if actually moving
-        if (isMoving()) {
-            playFootstep();
-        }
-    }, interval);
-    
-    console.log(`👣 Footsteps started (${mode} mode, ${interval}ms interval)`);
-}
-
-/**
- * Stop playing footsteps
- */
-function stopFootsteps() {
-    if (footstepInterval) {
-        clearInterval(footstepInterval);
-        footstepInterval = null;
-    }
-}
-
-/**
- * Restart footsteps with current mode
- * Call this when movement mode changes
- */
-function restartFootsteps() {
-    const currentMode = getMovementMode();
-    startFootsteps(currentMode);
-}
+// Footstep timing moved to gameLoop for perfect responsiveness
 
 /**
  * Play collision sound effect
