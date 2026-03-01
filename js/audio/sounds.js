@@ -161,4 +161,50 @@ function playModeChangeSound(mode) {
     }
 }
 
+/**
+ * Play a cinematic power-up sound for the main menu
+ */
+function playPowerUpSound() {
+    const audioCtx = getAudioContext();
+    const master = getMasterGain();
+    const reverb = typeof getReverbNode === 'function' ? getReverbNode() : null;
+    if (!audioCtx || !master) return;
+    
+    const now = audioCtx.currentTime;
+    
+    // Deep bass sweep
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(50, now);
+    osc.frequency.exponentialRampToValueAtTime(150, now + 1.5);
+    
+    // High tech shimmer
+    const osc2 = audioCtx.createOscillator();
+    osc2.type = 'sawtooth';
+    osc2.frequency.setValueAtTime(400, now);
+    osc2.frequency.exponentialRampToValueAtTime(800, now + 1.5);
+    
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.01, now);
+    gain.gain.linearRampToValueAtTime(0.3, now + 1.0);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 3.0);
+    
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(200, now);
+    filter.frequency.linearRampToValueAtTime(2000, now + 1.5);
+    
+    osc.connect(gain);
+    osc2.connect(filter);
+    filter.connect(gain);
+    
+    gain.connect(master);
+    if (reverb) gain.connect(reverb);
+    
+    osc.start(now);
+    osc2.start(now);
+    osc.stop(now + 3.0);
+    osc2.stop(now + 3.0);
+}
+
 console.log('✅ Sound effects module loaded');

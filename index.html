@@ -66,6 +66,12 @@
     <script>
     // UI Screen Logic (Modernized)
     document.getElementById('startBtn').addEventListener('click', () => {
+      if (typeof initAudio === 'function' && !window.audioEngineStarted) {
+          initAudio();
+          window.audioEngineStarted = true;
+          if (typeof playPowerUpSound === 'function') playPowerUpSound();
+      }
+      
       document.getElementById('startScreen').classList.add('fade-out');
       setTimeout(() => {
           document.getElementById('startScreen').classList.add('hidden');
