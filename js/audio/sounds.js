@@ -207,4 +207,30 @@ function playPowerUpSound() {
     osc2.stop(now + 3.0);
 }
 
+/**
+ * Play dull click when sonar is on cooldown
+ */
+function playSonarError() {
+    const audioCtx = getAudioContext();
+    const master = getMasterGain();
+    const reverb = typeof getReverbNode === 'function' ? getReverbNode() : null;
+    if (!audioCtx || !master) return;
+    
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(100, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.05);
+    
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+    
+    osc.connect(gain);
+    gain.connect(master);
+    if (reverb) gain.connect(reverb);
+    osc.start(now);
+    osc.stop(now + 0.05);
+}
+
 console.log('✅ Sound effects module loaded');

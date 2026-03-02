@@ -5,9 +5,19 @@
 
 // Sonar Visuals removed. Relying on minimalistic HUD.
 
+let lastSonarTime = 0;
+const SONAR_COOLDOWN = 1.0; // 1 second cooldown
+
 function fireSonarPing(player, map) {
     const audioCtx = getAudioContext();
     if (!audioCtx) return null;
+    
+    const now = audioCtx.currentTime;
+    if (now - lastSonarTime < SONAR_COOLDOWN) {
+        if (typeof playSonarError === 'function') playSonarError();
+        return false;
+    }
+    lastSonarTime = now;
     
     // Cast ray ONLY in front direction (max 10 tiles)
     const frontDistance = castRay(player.x, player.y, player.angle, map, 10);

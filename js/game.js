@@ -410,8 +410,10 @@ function startGame(level = 'easy') {
                     rotatePlayer(gameState.player, direction);
                 },
                 () => {
+                    const result = fireSonarPing(gameState.player, gameState.map);
+                    if (result === false) return; // Cooldown blocked it
+                    
                     gameState.pings++;
-                    fireSonarPing(gameState.player, gameState.map);
                     const pingSpan = document.getElementById('hud-ping');
                     if (pingSpan) {
                         pingSpan.textContent = 'PINGING...';
