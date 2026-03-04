@@ -29,10 +29,10 @@ const FALLBACK_LEVEL = `
 1111111
 `.trim();
 
-let showMap = false;
 let lastFootstepTime = 0;
 let mapCanvas = null;
 let mapCtx = null;
+let gameInitialized = false;
 
 function initializeGame(level) {
     console.log('='.repeat(60));
@@ -391,12 +391,29 @@ function startGame(level = 'easy') {
     console.log('🎧 Put on headphones and click to start...');
     
     if (!getAudioContext()) {
-        initAudio();
+        if (typeof initAudio === 'function') initAudio();
+    }
+    
+    setTimeout(() => {
+        const audioCtx = getAudioContext();
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
         
-        setTimeout(() => {
-            createOceanWaves();
-            if (!mapCanvas) createMapCanvas();
-            
+        const master = getMasterGain();
+        if (master && audioCtx) {
+            master.gain.setValueAtTime(0.8, audioCtx.currentTime);
+        }
+        
+        createOceanWaves();
+        if (!mapCanvas) createMapCanvas();
+        
+        const gameHUD = document.getElementById('gameHUD');
+        if (gameHUD) gameHUD.classList.remove('hidden');
+        
+        initializeGame(level);
+        
+        if (!gameInitialized) {
             initKeyboardControls(
                 (direction) => {
                     const result = movePlayer(gameState.player, gameState.map, direction);
@@ -430,30 +447,16 @@ function startGame(level = 'easy') {
                     }
                 }
             );
-            initializeGame(level);
+            
             requestAnimationFrame(gameLoop);
-            
-            const gameHUD = document.getElementById('gameHUD');
-            if (gameHUD) gameHUD.classList.remove('hidden');
-            
+            gameInitialized = true;
             console.log('✅ Game started!');
-            console.log('💡 Press SPACEBAR for sonar');
-        }, 100);
-    } else {
-        setTimeout(() => {
-            const master = getMasterGain();
-            if (master) {
-                const audioCtx = getAudioContext();
-                master.gain.setValueAtTime(0.8, audioCtx.currentTime);
-            }
-            createOceanWaves();
-            const gameHUD = document.getElementById('gameHUD');
-            if (gameHUD) gameHUD.classList.remove('hidden');
-            
-            initializeGame(level);
+        } else {
             console.log('✅ Game restarted!');
-        }, 100);
-    }
+        }
+        
+        console.log('💡 Press SPACEBAR for sonar');
+    }, 100);
 }
 
 console.log('✅ Game module loaded');
