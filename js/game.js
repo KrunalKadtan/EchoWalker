@@ -29,6 +29,7 @@ const FALLBACK_LEVEL = `
 1111111
 `.trim();
 
+let showMap = false;
 let lastFootstepTime = 0;
 let mapCanvas = null;
 let mapCtx = null;
