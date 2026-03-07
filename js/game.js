@@ -159,8 +159,7 @@ function stopAllAudio() {
     
     console.log('🔇 Stopping all game audio...');
     
-    // Stop footsteps
-    stopFootsteps();
+    // Footsteps are now perfectly coupled to the gameLoop which halts automatically
     
     // Stop ocean waves by disconnecting nodes
     if (window.oceanWaveNodes && window.oceanWaveNodes.length > 0) {
@@ -199,6 +198,7 @@ function createMapCanvas() {
         z-index: 1000;
         box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(0, 255, 204, 0.2);
         backdrop-filter: blur(10px);
+        display: none;
     `;
     document.body.appendChild(mapCanvas);
     mapCtx = mapCanvas.getContext('2d');
