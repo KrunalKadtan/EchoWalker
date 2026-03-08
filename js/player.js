@@ -103,7 +103,9 @@ function movePlayer(player, map, direction) {
     } else {
         // Real collision
         const collisionDir = detectCollisionDirection(oldX, oldY, newX, newY, player.angle);
-        playCollisionSound();
+        if (typeof playCollisionSound === 'function') {
+            playCollisionSound(collisionDir);
+        }
         
         return { moved: false, collision: collisionDir };
     }

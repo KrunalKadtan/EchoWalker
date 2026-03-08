@@ -45,8 +45,9 @@ function playFootstep() {
 
 /**
  * Play collision sound effect
+ * @param {string} direction - 'front', 'back', 'left', 'right'
  */
-function playCollisionSound() {
+function playCollisionSound(direction = 'front') {
     const audioCtx = getAudioContext();
     const master = getMasterGain();
     
@@ -64,11 +65,19 @@ function playCollisionSound() {
     collisionGain.gain.setValueAtTime(0.3, now);
     collisionGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
     
+    // Stereo panning based on wall impact direction
+    const panner = audioCtx.createStereoPanner();
+    if (direction === 'left') panner.pan.value = -1;
+    else if (direction === 'right') panner.pan.value = 1;
+    else panner.pan.value = 0;
+    
     osc.connect(collisionGain);
-    collisionGain.connect(master);
+    collisionGain.connect(panner);
+    
+    panner.connect(master);
     
     const reverb = getReverbNode();
-    if (reverb) collisionGain.connect(reverb);
+    if (reverb) panner.connect(reverb);
     
     osc.start(now);
     osc.stop(now + 0.1);
