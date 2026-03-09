@@ -64,6 +64,27 @@
     </div>
     
     <script>
+    // Load Best Times
+    window.updateBestTimeUI = function() {
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            const level = btn.getAttribute('data-level');
+            const bestTime = localStorage.getItem('echo_best_' + level);
+            
+            // Remove existing record div if it exists
+            const existing = btn.querySelector('.best-time-display');
+            if (existing) existing.remove();
+            
+            if (bestTime) {
+                const bestDiv = document.createElement('div');
+                bestDiv.className = 'best-time-display';
+                bestDiv.style.cssText = 'font-size: 14px; margin-top: 8px; color: #0ff; text-shadow: 0 0 5px rgba(0,255,255,0.5); letter-spacing: 1px; font-weight: 600;';
+                bestDiv.innerHTML = `🏆 BEST: ${bestTime}s`;
+                btn.appendChild(bestDiv);
+            }
+        });
+    };
+    updateBestTimeUI();
+
     // UI Screen Logic (Modernized)
     document.getElementById('startBtn').addEventListener('click', () => {
       if (typeof initAudio === 'function' && !window.audioEngineStarted) {

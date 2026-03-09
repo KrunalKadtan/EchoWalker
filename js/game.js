@@ -121,6 +121,19 @@ function winGame() {
     
     const elapsedTime = ((Date.now() - gameState.startTime) / 1000).toFixed(1);
     
+    // Save to LocalStorage
+    const storageKey = 'echo_best_' + gameState.currentLevel;
+    const previousBest = localStorage.getItem(storageKey);
+    let isNewRecord = false;
+    
+    if (!previousBest || parseFloat(elapsedTime) < parseFloat(previousBest)) {
+        localStorage.setItem(storageKey, elapsedTime);
+        isNewRecord = true;
+    }
+    
+    // Force refresh of index UI
+    if (typeof updateBestTimeUI === 'function') updateBestTimeUI();
+    
     console.log('='.repeat(60));
     console.log('🎉 VICTORY! 🎉');
     console.log('='.repeat(60));
@@ -136,8 +149,9 @@ function winGame() {
     setTimeout(() => {
         const statsElem = document.getElementById('stats');
         if (statsElem) {
+            const recordHTML = isNewRecord ? '<span style="color:#0f0; font-size:14px; margin-left:15px; text-shadow: 0 0 10px #0f0;">NEW RECORD!</span>' : '';
             statsElem.innerHTML = `
-                <div class="stat-item"><span class="stat-label">Time</span><span class="stat-value highlight">${elapsedTime}s</span></div>
+                <div class="stat-item"><span class="stat-label">Time</span><span class="stat-value highlight">${elapsedTime}s ${recordHTML}</span></div>
                 <div class="stat-item"><span class="stat-label">Steps</span><span class="stat-value">${gameState.steps}</span></div>
                 <div class="stat-item"><span class="stat-label">Sonar Pings</span><span class="stat-value">${gameState.pings}</span></div>
                 <div class="stat-item"><span class="stat-label">Collisions</span><span class="stat-value ${gameState.collisions > 0 ? 'warning' : ''}">${gameState.collisions}</span></div>
