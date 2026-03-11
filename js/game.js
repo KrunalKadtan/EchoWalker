@@ -52,6 +52,7 @@ function initializeGame(level) {
     gameState.steps = 0;
     gameState.pings = 0;
     gameState.collisions = 0;
+    gameState.energy = 100;
     gameState.gameActive = true;
     
     console.log('Player start:', gameState.player);
@@ -159,9 +160,57 @@ function winGame() {
         }
         const victoryScreen = document.getElementById('victoryScreen');
         if (victoryScreen) {
+            victoryScreen.querySelector('h2').textContent = 'VICTORY!';
+            victoryScreen.querySelector('h2').style.color = '';
+            victoryScreen.querySelector('.icon-header').textContent = '🎉';
+            victoryScreen.querySelector('.subtitle').textContent = 'Signal Intercepted & Extraction Complete';
             victoryScreen.classList.remove('hidden');
             victoryScreen.classList.add('fade-up');
         }
+        const gameHUD = document.getElementById('gameHUD');
+        if (gameHUD) gameHUD.classList.add('hidden');
+    }, 1000);
+}
+
+function loseGame() {
+    if (!gameState.gameActive) return;
+    gameState.gameActive = false;
+    
+    showMap = false;
+    if (mapCanvas) mapCanvas.style.display = 'none';
+    
+    stopAllAudio();
+    
+    if (typeof playSonarError === 'function') {
+        playSonarError();
+        setTimeout(playSonarError, 200);
+        setTimeout(playSonarError, 400);
+    }
+    
+    console.log('💀 BATTERY DEPLETED - GAME OVER');
+    
+    setTimeout(() => {
+        const victoryScreen = document.getElementById('victoryScreen');
+        if (victoryScreen) {
+            victoryScreen.querySelector('h2').textContent = 'SYSTEM FAILURE';
+            victoryScreen.querySelector('h2').style.color = '#ff0000';
+            victoryScreen.querySelector('.icon-header').textContent = '💀';
+            victoryScreen.querySelector('.subtitle').textContent = 'Sonar Battery Depleted. Signal Lost.';
+            
+            const statsElem = document.getElementById('stats');
+            if (statsElem) {
+                statsElem.innerHTML = `
+                    <div class="stat-item"><span class="stat-label">Status</span><span class="stat-value warning">M.I.A.</span></div>
+                    <div class="stat-item"><span class="stat-label">Steps</span><span class="stat-value">${gameState.steps}</span></div>
+                    <div class="stat-item"><span class="stat-label">Sonar Pings</span><span class="stat-value">${gameState.pings}</span></div>
+                    <div class="stat-item"><span class="stat-label">Collisions</span><span class="stat-value warning">${gameState.collisions}</span></div>
+                `;
+            }
+            
+            victoryScreen.classList.remove('hidden');
+            victoryScreen.classList.add('fade-up');
+        }
+        
         const gameHUD = document.getElementById('gameHUD');
         if (gameHUD) gameHUD.classList.add('hidden');
     }, 1000);
@@ -385,6 +434,13 @@ function updateHUD() {
     if (modeSpan && typeof getMovementMode === 'function') {
         modeSpan.textContent = getMovementMode().toUpperCase();
     }
+    const energySpan = document.getElementById('hud-energy');
+    if (energySpan && gameState.gameActive) {
+        energySpan.textContent = gameState.energy + '%';
+        if (gameState.energy > 50) energySpan.style.color = '#0f0';
+        else if (gameState.energy > 20) energySpan.style.color = '#ff0';
+        else energySpan.style.color = '#f00';
+    }
 }
 
 function startGame(level = 'easy') {
@@ -436,6 +492,8 @@ function startGame(level = 'easy') {
                         gameState.steps++;
                     } else {
                         gameState.collisions++;
+                        gameState.energy -= 5;
+                        if (gameState.energy <= 0) loseGame();
                     }
                 },
                 (direction) => {
@@ -446,6 +504,9 @@ function startGame(level = 'easy') {
                     if (result === false) return; // Cooldown blocked it
                     
                     gameState.pings++;
+                    gameState.energy -= 2;
+                    if (gameState.energy <= 0) loseGame();
+                    
                     const pingSpan = document.getElementById('hud-ping');
                     if (pingSpan) {
                         pingSpan.textContent = 'PINGING...';
