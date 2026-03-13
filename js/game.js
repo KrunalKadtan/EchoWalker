@@ -55,13 +55,18 @@ function initializeGame(level) {
     gameState.energy = 100;
     gameState.gameActive = true;
     
+    // Generate BFS Pathing tree for Acoustic Guide
+    gameState.parentMap = typeof buildPathMap === 'function' ? buildPathMap(
+        gameState.map, 
+        Math.floor(gameState.exit.x), 
+        Math.floor(gameState.exit.y)
+    ) : null;
+    
     console.log('Player start:', gameState.player);
     console.log('Exit location:', gameState.exit);
     console.log('='.repeat(60));
     
-    updateOceanPosition(gameState.exit);
     updateListenerPosition();
-    updateOceanVolume(gameState.player, gameState.exit);
 }
 
 function updateListenerPosition() {
@@ -88,7 +93,40 @@ function updateListenerPosition() {
     audioCtx.listener.upY.value = 1;
     audioCtx.listener.upZ.value = 0;
     
+    // Dynamic Breadcrumb Ocean Target
+    const breadcrumbTarget = typeof getOceanTarget === 'function' ? 
+        getOceanTarget(player, gameState.exit, gameState.parentMap) : gameState.exit;
+        
+    if (typeof updateOceanPosition === 'function') {
+        updateOceanPosition(breadcrumbTarget);
+    }
+    
     updateOceanVolume(player, gameState.exit);
+}
+
+function getOceanTarget(player, exit, parentMap) {
+    if (!parentMap) return exit;
+    
+    let currX = Math.floor(player.x);
+    let currY = Math.floor(player.y);
+    
+    if (currX === Math.floor(exit.x) && currY === Math.floor(exit.y)) {
+        return exit;
+    }
+    
+    let steps = 0;
+    let targetX = currX;
+    let targetY = currY;
+    
+    while (parentMap[targetY] && parentMap[targetY][targetX]) {
+        const next = parentMap[targetY][targetX];
+        targetX = next.x;
+        targetY = next.y;
+        steps++;
+        if (steps >= 6) break;
+    }
+    
+    return { x: targetX + 0.5, y: targetY + 0.5 };
 }
 
 function checkWinCondition() {

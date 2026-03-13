@@ -87,4 +87,39 @@ function generateMaze(size) {
     return map;
 }
 
+/**
+ * Build a BFS tree from the exit to all reachable cells.
+ * Returns a 2D array where each cell contains {x, y} of the next step toward the exit.
+ */
+function buildPathMap(map, exitX, exitY) {
+    const size = map.length;
+    const parentMap = Array.from({ length: size }, () => new Array(size).fill(null));
+    const visited = Array.from({ length: size }, () => new Array(size).fill(false));
+    
+    const queue = [{ x: exitX, y: exitY }];
+    visited[exitY][exitX] = true;
+    
+    // North, South, East, West
+    const dirs = [[0, -1], [0, 1], [1, 0], [-1, 0]];
+    
+    while (queue.length > 0) {
+        const curr = queue.shift();
+        
+        for (let [dx, dy] of dirs) {
+            const nx = curr.x + dx;
+            const ny = curr.y + dy;
+            
+            if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+                if (map[ny][nx] === 0 && !visited[ny][nx]) {
+                    visited[ny][nx] = true;
+                    parentMap[ny][nx] = { x: curr.x, y: curr.y };
+                    queue.push({ x: nx, y: ny });
+                }
+            }
+        }
+    }
+    
+    return parentMap;
+}
+
 console.log('✅ Maze module loaded');
