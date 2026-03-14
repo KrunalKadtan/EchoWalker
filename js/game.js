@@ -118,12 +118,28 @@ function getOceanTarget(player, exit, parentMap) {
     let targetX = currX;
     let targetY = currY;
     
+    let initialDirX = null;
+    let initialDirY = null;
+    
     while (parentMap[targetY] && parentMap[targetY][targetX]) {
         const next = parentMap[targetY][targetX];
+        
+        const dx = next.x - targetX;
+        const dy = next.y - targetY;
+        
+        if (initialDirX === null && initialDirY === null) {
+            initialDirX = dx;
+            initialDirY = dy;
+        } else if (initialDirX !== dx || initialDirY !== dy) {
+            // Path turns a corner! Stop here to prevent the sound vector 
+            // from cutting through walls geometrically.
+            break;
+        }
+        
         targetX = next.x;
         targetY = next.y;
         steps++;
-        if (steps >= 6) break;
+        if (steps >= 12) break; // Max corridor trace
     }
     
     return { x: targetX + 0.5, y: targetY + 0.5 };
