@@ -31,8 +31,8 @@ function isValidPosition(x, y, oldX, oldY, map) {
     const dx = x - oldX;
     const dy = y - oldY;
     
-    // Buffer zone - only check in direction of movement
-    const buffer = 0.25;
+    // Buffer zone - shrink significantly to allow squeezing around tight corners
+    const buffer = 0.12;
     const fractionalX = x - mapX;
     const fractionalY = y - mapY;
     

@@ -121,12 +121,42 @@ function scheduleWaveCrash() {
     waveCrashTimeout = setTimeout(scheduleWaveCrash, 2000 + Math.random() * 3000);
 }
 
+let currentOceanX = null;
+let currentOceanZ = null;
+
+function resetOceanLerp() {
+    currentOceanX = null;
+    currentOceanZ = null;
+}
+
 function updateOceanPosition(exit) {
     if (!exitPanner) return;
     
-    exitPanner.positionX.value = exit.x * TILE_SIZE;
+    const targetX = exit.x * TILE_SIZE;
+    const targetZ = exit.y * TILE_SIZE;
+    
+    // Snap instantly if uninitialized or teleporting across maps
+    if (currentOceanX === null || 
+        Math.abs(targetX - currentOceanX) > TILE_SIZE * 15 || 
+        Math.abs(targetZ - currentOceanZ) > TILE_SIZE * 15) {
+        
+        currentOceanX = targetX;
+        currentOceanZ = targetZ;
+        exitPanner.positionX.value = currentOceanX;
+        exitPanner.positionY.value = 0;
+        exitPanner.positionZ.value = currentOceanZ;
+        return;
+    }
+    
+    // Extremely smooth exponential drag for fluid acoustic transitions (2% per frame)
+    // This makes the audio smoothly and progressively bend around corners 
+    // over the course of 1-2 seconds as the player approaches.
+    currentOceanX += (targetX - currentOceanX) * 0.02;
+    currentOceanZ += (targetZ - currentOceanZ) * 0.02;
+    
+    exitPanner.positionX.value = currentOceanX;
     exitPanner.positionY.value = 0;
-    exitPanner.positionZ.value = exit.y * TILE_SIZE;
+    exitPanner.positionZ.value = currentOceanZ;
 }
 
 function updateOceanVolume(player, exit) {

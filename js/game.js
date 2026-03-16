@@ -41,6 +41,8 @@ function initializeGame(level) {
     console.log('='.repeat(60));
     console.log(`Level: ${LEVELS[level].name} (${LEVELS[level].size}×${LEVELS[level].size})`);
     
+    if (typeof resetOceanLerp === 'function') resetOceanLerp();
+    
     const mapSize = LEVELS[level].size;
     gameState.map = generateMaze(mapSize);
     gameState.currentLevel = level;
@@ -77,17 +79,18 @@ function updateListenerPosition() {
     
     const { player } = gameState;
     
-    audioCtx.listener.positionX.value = player.x * TILE_SIZE;
+    audioCtx.listener.positionX.setTargetAtTime(player.x * TILE_SIZE, audioCtx.currentTime, 0.1);
     audioCtx.listener.positionY.value = 0;
-    audioCtx.listener.positionZ.value = player.y * TILE_SIZE;
+    audioCtx.listener.positionZ.setTargetAtTime(player.y * TILE_SIZE, audioCtx.currentTime, 0.1);
     
     const angleRad = (player.angle * Math.PI) / 180;
     const forwardX = Math.sin(angleRad);
     const forwardZ = -Math.cos(angleRad);
     
-    audioCtx.listener.forwardX.value = forwardX;
+    // Smoothly rotate the player's head over time instead of snapping
+    audioCtx.listener.forwardX.setTargetAtTime(forwardX, audioCtx.currentTime, 0.1);
     audioCtx.listener.forwardY.value = 0;
-    audioCtx.listener.forwardZ.value = forwardZ;
+    audioCtx.listener.forwardZ.setTargetAtTime(forwardZ, audioCtx.currentTime, 0.1);
     
     audioCtx.listener.upX.value = 0;
     audioCtx.listener.upY.value = 1;
@@ -118,28 +121,18 @@ function getOceanTarget(player, exit, parentMap) {
     let targetX = currX;
     let targetY = currY;
     
-    let initialDirX = null;
-    let initialDirY = null;
-    
     while (parentMap[targetY] && parentMap[targetY][targetX]) {
         const next = parentMap[targetY][targetX];
-        
-        const dx = next.x - targetX;
-        const dy = next.y - targetY;
-        
-        if (initialDirX === null && initialDirY === null) {
-            initialDirX = dx;
-            initialDirY = dy;
-        } else if (initialDirX !== dx || initialDirY !== dy) {
-            // Path turns a corner! Stop here to prevent the sound vector 
-            // from cutting through walls geometrically.
-            break;
-        }
-        
         targetX = next.x;
         targetY = next.y;
         steps++;
-        if (steps >= 12) break; // Max corridor trace
+        
+        // Predictive Audio Curve: By placing the beacon exactly 3 steps 
+        // ahead of the player at all times, the beacon will organically 
+        // sweep around corners *as the player approaches them*. 
+        // This causes the ocean wind to dynamically pull the player 
+        // sideways into the correct intersection fluidly!
+        if (steps >= 3) break;
     }
     
     return { x: targetX + 0.5, y: targetY + 0.5 };
@@ -340,34 +333,36 @@ function drawDebugMap() {
     mapCtx.shadowColor = '#00ffcc';
     mapCtx.lineWidth = 1;
     
-    // Draw maze
+    // Draw maze (Rounded Walls)
     for (let y = 0; y < mapSize; y++) {
         for (let x = 0; x < mapSize; x++) {
             if (gameState.map[y][x] === 1) {
                 mapCtx.strokeStyle = 'rgba(0, 255, 204, 0.4)';
-                mapCtx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
                 mapCtx.fillStyle = 'rgba(0, 255, 204, 0.05)';
-                mapCtx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                
+                // Gap between grid tiles for a sleek tech look
+                mapCtx.beginPath();
+                mapCtx.roundRect(x * cellSize + 2, y * cellSize + 2, cellSize - 4, cellSize - 4, 6);
+                mapCtx.fill();
+                mapCtx.stroke();
             }
         }
     }
     
-    // Draw exit
+    // Draw exit (Rounded)
     mapCtx.shadowColor = '#00aaff';
     mapCtx.strokeStyle = '#00aaff';
     mapCtx.fillStyle = 'rgba(0, 170, 255, 0.2)';
-    mapCtx.fillRect(
+    mapCtx.beginPath();
+    mapCtx.roundRect(
         (gameState.exit.x - 0.5) * cellSize,
         (gameState.exit.y - 0.5) * cellSize,
         cellSize * 1.5,
-        cellSize * 1.5
-    );
-    mapCtx.strokeRect(
-        (gameState.exit.x - 0.5) * cellSize,
-        (gameState.exit.y - 0.5) * cellSize,
         cellSize * 1.5,
-        cellSize * 1.5
+        12
     );
+    mapCtx.fill();
+    mapCtx.stroke();
     
     // DRAW SONAR RAY
     const angleRad = (gameState.player.angle * Math.PI) / 180;
@@ -404,7 +399,7 @@ function drawDebugMap() {
     mapCtx.arc(
         gameState.player.x * cellSize,
         gameState.player.y * cellSize,
-        cellSize * 0.6,
+        cellSize * 0.25,
         0,
         Math.PI * 2
     );
