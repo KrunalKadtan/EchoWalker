@@ -80,9 +80,34 @@ function generateMaze(size) {
         }
     }
     
+    // CREATE BRAID LOOPS (Bypass corridors for Minotaur stealth)
+    // By randomly removing walls that separate two corridors, we convert the Perfect Maze 
+    // into a Braid Maze, introducing circular loops so players don't get trapped head-on.
+    let loopsToCreate = Math.floor((size * size) / 18); // ~12 loops for a 15x15 map
+    let attempts = 0;
+    while (loopsToCreate > 0 && attempts < 1000) {
+        attempts++;
+        const rx = 2 + Math.floor(Math.random() * (size - 4));
+        const ry = 2 + Math.floor(Math.random() * (size - 4));
+        
+        if (map[ry][rx] === 1) { // If it's a structural wall
+            const up = map[ry-1][rx] === 0;
+            const down = map[ry+1][rx] === 0;
+            const left = map[ry][rx-1] === 0;
+            const right = map[ry][rx+1] === 0;
+            
+            // If the wall perfectly divides two parallel open corridors, knock it down
+            if ((up && down && !left && !right) || (left && right && !up && !down)) {
+                map[ry][rx] = 0;
+                loopsToCreate--;
+            }
+        }
+    }
+    
     console.log('✅ Maze generated successfully');
     console.log('   Start area (1-3, 1-3) forced open');
     console.log('   Exit area forced open');
+    console.log(`   Braid Loops inserted: ${Math.floor((size * size) / 18) - loopsToCreate}`);
     
     return map;
 }
@@ -120,6 +145,50 @@ function buildPathMap(map, exitX, exitY) {
     }
     
     return parentMap;
+}
+
+/**
+ * Generic BFS to find the shortest path array from start to target
+ */
+function findShortestPath(map, startX, startY, targetX, targetY) {
+    const size = map.length;
+    const parentMap = Array.from({ length: size }, () => new Array(size).fill(null));
+    const visited = Array.from({ length: size }, () => new Array(size).fill(false));
+    
+    const queue = [{ x: startX, y: startY }];
+    visited[startY][startX] = true;
+    
+    const dirs = [[0, -1], [0, 1], [1, 0], [-1, 0]];
+    let found = false;
+    
+    while (queue.length > 0) {
+        const curr = queue.shift();
+        if (curr.x === targetX && curr.y === targetY) {
+            found = true;
+            break;
+        }
+        for (let [dx, dy] of dirs) {
+            const nx = curr.x + dx;
+            const ny = curr.y + dy;
+            if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+                if (map[ny][nx] === 0 && !visited[ny][nx]) {
+                    visited[ny][nx] = true;
+                    parentMap[ny][nx] = { x: curr.x, y: curr.y };
+                    queue.push({ x: nx, y: ny });
+                }
+            }
+        }
+    }
+    
+    if (!found) return null;
+    
+    const path = [];
+    let curr = { x: targetX, y: targetY };
+    while (curr.x !== startX || curr.y !== startY) {
+        path.push(curr);
+        curr = parentMap[curr.y][curr.x];
+    }
+    return path.reverse();
 }
 
 console.log('✅ Maze module loaded');

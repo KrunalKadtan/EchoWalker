@@ -38,7 +38,124 @@ function playFootstep() {
     if (reverb) footGain.connect(reverb);
     
     noise.start(now);
-    noise.stop(now + 0.08);
+    noise.stop(now + 0.3);
+}
+
+let minotaurPanner = null;
+
+function playMinotaurStep(minotaur) {
+    const audioCtx = getAudioContext();
+    const master = getMasterGain();
+    const reverb = typeof getReverbNode === 'function' ? getReverbNode() : null;
+    
+    if (!audioCtx || !master) return;
+    
+    if (!minotaurPanner) {
+        minotaurPanner = audioCtx.createPanner();
+        minotaurPanner.panningModel = 'HRTF';
+        minotaurPanner.distanceModel = 'linear';
+        minotaurPanner.refDistance = 20; // 100% volume within 1 tile
+        minotaurPanner.maxDistance = 600; // Linear fade across 30 tiles (full map)
+        minotaurPanner.rolloffFactor = 1.0;
+        
+        minotaurPanner.connect(master);
+        if (reverb) minotaurPanner.connect(reverb);
+    }
+    
+    const now = audioCtx.currentTime;
+    
+    // Snap to minotaur's exact physical coordinates smoothly
+    minotaurPanner.positionX.setTargetAtTime(minotaur.x * 20, now, 0.1); 
+    minotaurPanner.positionY.value = 0;
+    minotaurPanner.positionZ.setTargetAtTime(minotaur.y * 20, now, 0.1);
+    
+    // Low, distorted stomp with square growl
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(60, now);
+    osc.frequency.exponentialRampToValueAtTime(10, now + 0.5);
+    
+    const growl = audioCtx.createOscillator();
+    growl.type = 'square';
+    growl.frequency.setValueAtTime(40, now);
+    growl.frequency.exponentialRampToValueAtTime(10, now + 0.5);
+    
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(400, now);
+    filter.frequency.exponentialRampToValueAtTime(50, now + 0.5);
+    filter.Q.value = 5; // Resonant 'thwack'
+    
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(3.0, now + 0.05); // Massive Thump
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+    
+    osc.connect(filter);
+    growl.connect(filter);
+    filter.connect(gain);
+    gain.connect(minotaurPanner);
+    
+    osc.start(now);
+    growl.start(now);
+    osc.stop(now + 0.5);
+    growl.stop(now + 0.5);
+}
+
+function playJumpScareLevel() {
+    const audioCtx = getAudioContext();
+    const master = getMasterGain();
+    if (!audioCtx || !master) return;
+    
+    const now = audioCtx.currentTime;
+    
+    // Max volume override
+    master.gain.setValueAtTime(1.0, now);
+    
+    // Piercing screech
+    const osc1 = audioCtx.createOscillator();
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(800, now);
+    osc1.frequency.exponentialRampToValueAtTime(300, now + 1.5);
+    
+    const osc2 = audioCtx.createOscillator();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(850, now);
+    osc2.frequency.exponentialRampToValueAtTime(320, now + 1.5);
+    
+    const lfo = audioCtx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.value = 40; // FM synthesis rattle
+    
+    const lfoGain = audioCtx.createGain();
+    lfoGain.gain.value = 500;
+    
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc1.frequency);
+    lfoGain.connect(osc2.frequency);
+    
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1000, now);
+    filter.Q.value = 5;
+    
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(1.0, now + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+    
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gain);
+    gain.connect(master);
+    
+    lfo.start(now);
+    osc1.start(now);
+    osc2.start(now);
+    
+    lfo.stop(now + 1.5);
+    osc1.stop(now + 1.5);
+    osc2.stop(now + 1.5);
 }
 
 // Footstep timing moved to gameLoop for perfect responsiveness

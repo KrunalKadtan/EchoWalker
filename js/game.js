@@ -57,6 +57,17 @@ function initializeGame(level) {
     gameState.energy = 100;
     gameState.gameActive = true;
     
+    // Minotaur spawns in a random opposite corner (Top-Right or Bottom-Left)
+    // so it sweeps across the map hunting the player rather than camping the Exit.
+    const spawnTopRight = Math.random() > 0.5;
+    gameState.minotaur = {
+        x: spawnTopRight ? mapSize - 3 : 2,
+        y: spawnTopRight ? 2 : mapSize - 3,
+        active: mapSize >= 15,
+        lastMoveTime: Date.now() + 5000, // 5 second grace period
+        targetInterval: 1500
+    };
+    
     // Generate BFS Pathing tree for Acoustic Guide
     gameState.parentMap = typeof buildPathMap === 'function' ? buildPathMap(
         gameState.map, 
@@ -263,6 +274,85 @@ function loseGame() {
     }, 1000);
 }
 
+function updateMinotaur(now) {
+    const m = gameState.minotaur;
+    const p = gameState.player;
+    if (!m || !m.active || !gameState.gameActive) return;
+    
+    // Check caught condition
+    if (Math.floor(m.x) === Math.floor(p.x) && Math.floor(m.y) === Math.floor(p.y)) {
+        triggerJumpScare();
+        return;
+    }
+    
+    if (now - m.lastMoveTime > m.targetInterval) {
+        m.lastMoveTime = now;
+        
+        const path = typeof findShortestPath === 'function' ? 
+            findShortestPath(gameState.map, Math.floor(m.x), Math.floor(m.y), Math.floor(p.x), Math.floor(p.y)) : null;
+            
+        if (path && path.length > 0) {
+            const mode = typeof getMovementMode === 'function' ? getMovementMode() : 'walk';
+            
+            // If creeping, minotaur might lose scent (50% chance to not move)
+            if (mode === 'creep' && Math.random() > 0.5) {
+                // Lost scent, wanders aimlessly (skips tracking step)
+            } else {
+                const nextStep = path[0];
+                m.x = nextStep.x + 0.5;
+                m.y = nextStep.y + 0.5;
+            }
+        }
+        
+        if (typeof playMinotaurStep === 'function') {
+            playMinotaurStep(m);
+        }
+        
+        // Check again after moving
+        if (Math.floor(m.x) === Math.floor(p.x) && Math.floor(m.y) === Math.floor(p.y)) {
+            triggerJumpScare();
+        }
+    }
+    
+    // Dynamically update aggro interval based on player state
+    const mode = typeof getMovementMode === 'function' ? getMovementMode() : 'walk';
+    if (mode === 'run') m.targetInterval = 800;
+    else if (mode === 'walk') m.targetInterval = 1500;
+    else m.targetInterval = 3000;
+}
+
+function triggerJumpScare() {
+    if (!gameState.gameActive) return;
+    gameState.gameActive = false;
+    
+    showMap = false;
+    if (mapCanvas) mapCanvas.style.display = 'none';
+    
+    stopAllAudio();
+    if (typeof playJumpScareLevel === 'function') playJumpScareLevel();
+    
+    const victoryScreen = document.getElementById('victoryScreen');
+    if (victoryScreen) {
+        victoryScreen.style.backgroundColor = '#4a0000';
+        setTimeout(() => victoryScreen.style.backgroundColor = '', 500);
+        
+        victoryScreen.querySelector('h2').textContent = 'YOU WERE CAUGHT';
+        victoryScreen.querySelector('h2').style.color = '#ff0000';
+        victoryScreen.querySelector('.icon-header').textContent = '🩸';
+        victoryScreen.querySelector('.subtitle').textContent = 'The Minotaur found you.';
+        
+        const statsElem = document.getElementById('stats');
+        if (statsElem) statsElem.innerHTML = '';
+        
+        victoryScreen.classList.remove('hidden');
+        victoryScreen.classList.add('fade-up');
+    }
+    console.log('🩸 SLAIN BY MINOTAUR - GAME OVER');
+    
+    const gameHUD = document.getElementById('gameHUD');
+    if (gameHUD) gameHUD.classList.add('hidden');
+}
+
 function stopAllAudio() {
     const audioCtx = getAudioContext();
     if (!audioCtx) return;
@@ -392,6 +482,21 @@ function drawDebugMap() {
     mapCtx.arc(rayEndX * cellSize, rayEndY * cellSize, 4, 0, Math.PI * 2);
     mapCtx.fill();
     
+    // Draw Minotaur
+    if (gameState.minotaur && gameState.minotaur.active) {
+        mapCtx.shadowColor = '#ff0000';
+        mapCtx.fillStyle = '#ff0000';
+        mapCtx.beginPath();
+        mapCtx.arc(
+            gameState.minotaur.x * cellSize,
+            gameState.minotaur.y * cellSize,
+            cellSize * 0.4,
+            0,
+            Math.PI * 2
+        );
+        mapCtx.fill();
+    }
+
     // Draw player
     mapCtx.shadowColor = '#00ffcc';
     mapCtx.fillStyle = '#00ffcc';
@@ -452,10 +557,15 @@ function gameLoop(currentTime) {
         if (gameState.gameActive) {
             updateListenerPosition();
             checkWinCondition();
+            
+            if (typeof updateMinotaur === 'function') {
+                updateMinotaur(Date.now());
+            }
+            
             drawDebugMap();
             updateHUD();
             
-            // Instantly responsive footsteps physics
+            // Footsteps handling
             if (typeof isMoving === 'function') {
                 if (isMoving()) {
                     let interval = 500;
@@ -555,6 +665,11 @@ function startGame(level = 'easy') {
                     gameState.pings++;
                     gameState.energy -= 2;
                     if (gameState.energy <= 0) loseGame();
+                    
+                    if (gameState.minotaur && gameState.minotaur.active) {
+                         gameState.minotaur.lastMoveTime = 0; // Force immediate step
+                         gameState.minotaur.targetInterval = 600; // Hyper aggro
+                    }
                     
                     const pingSpan = document.getElementById('hud-ping');
                     if (pingSpan) {
