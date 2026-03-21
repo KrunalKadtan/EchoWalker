@@ -41,7 +41,7 @@ function playFootstep() {
     noise.stop(now + 0.3);
 }
 
-let minotaurPanner = null;
+let minotaurPanners = {};
 
 function playMinotaurStep(minotaur) {
     const audioCtx = getAudioContext();
@@ -50,24 +50,26 @@ function playMinotaurStep(minotaur) {
     
     if (!audioCtx || !master) return;
     
-    if (!minotaurPanner) {
-        minotaurPanner = audioCtx.createPanner();
-        minotaurPanner.panningModel = 'HRTF';
-        minotaurPanner.distanceModel = 'linear';
-        minotaurPanner.refDistance = 20; // 100% volume within 1 tile
-        minotaurPanner.maxDistance = 600; // Linear fade across 30 tiles (full map)
-        minotaurPanner.rolloffFactor = 1.0;
+    if (!minotaurPanners[minotaur.id]) {
+        let panner = audioCtx.createPanner();
+        panner.panningModel = 'HRTF';
+        panner.distanceModel = 'exponential';
+        panner.refDistance = 20; 
+        panner.maxDistance = 10000; 
+        panner.rolloffFactor = 0.5; // Natural decay (44% at 5 tiles, 25% at 15 tiles)
         
-        minotaurPanner.connect(master);
-        if (reverb) minotaurPanner.connect(reverb);
+        panner.connect(master);
+        if (reverb) panner.connect(reverb);
+        minotaurPanners[minotaur.id] = panner;
     }
     
+    const panner = minotaurPanners[minotaur.id];
     const now = audioCtx.currentTime;
     
     // Snap to minotaur's exact physical coordinates smoothly
-    minotaurPanner.positionX.setTargetAtTime(minotaur.x * 20, now, 0.1); 
-    minotaurPanner.positionY.value = 0;
-    minotaurPanner.positionZ.setTargetAtTime(minotaur.y * 20, now, 0.1);
+    panner.positionX.setTargetAtTime(minotaur.x * 20, now, 0.1); 
+    panner.positionY.value = 0;
+    panner.positionZ.setTargetAtTime(minotaur.y * 20, now, 0.1);
     
     // Low, distorted stomp with square growl
     const osc = audioCtx.createOscillator();
@@ -91,10 +93,33 @@ function playMinotaurStep(minotaur) {
     gain.gain.linearRampToValueAtTime(3.0, now + 0.05); // Massive Thump
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
     
+    // --- HIGH FREQUENCY CRUNCH (VITAL FOR 3D HRTF SPATIALIZATION) ---
+    // Sub-bass cannot be localized by the human ear. We must inject a high-freq transient.
+    const crunch = audioCtx.createBufferSource();
+    crunch.buffer = typeof getNoiseBuffer === 'function' ? getNoiseBuffer() : null;
+    
+    const crunchFilter = audioCtx.createBiquadFilter();
+    crunchFilter.type = 'bandpass';
+    crunchFilter.frequency.value = 3000;
+    crunchFilter.Q.value = 1.0;
+    
+    const crunchGain = audioCtx.createGain();
+    crunchGain.gain.setValueAtTime(0, now);
+    crunchGain.gain.linearRampToValueAtTime(1.5, now + 0.02); // Sharp gravel crack
+    crunchGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2); // Very fast decay
+    
+    if (crunch.buffer) {
+        crunch.connect(crunchFilter);
+        crunchFilter.connect(crunchGain);
+        crunchGain.connect(panner);
+        crunch.start(now);
+        crunch.stop(now + 0.2);
+    }
+    
     osc.connect(filter);
     growl.connect(filter);
     filter.connect(gain);
-    gain.connect(minotaurPanner);
+    gain.connect(panner);
     
     osc.start(now);
     growl.start(now);

@@ -1,12 +1,10 @@
 const TILE_SIZE = 20;
 
 const LEVELS = {
-    demo: { size: 7, name: 'Demo' },
-    easy: { size: 11, name: 'Easy' },
-    medium: { size: 15, name: 'Medium' },
-    hard: { size: 21, name: 'Hard' },
-    extreme: { size: 25, name: 'Extremely Hard' },
-    nightmare: { size: 31, name: 'Nightmare' }
+    demo: { size: 11, name: 'Demo' },
+    easy: { size: 20, name: 'Easy' },
+    medium: { size: 30, name: 'Medium' },
+    hard: { size: 40, name: 'Hard' }
 };
 
 /**

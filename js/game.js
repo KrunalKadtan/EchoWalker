@@ -57,16 +57,33 @@ function initializeGame(level) {
     gameState.energy = 100;
     gameState.gameActive = true;
     
-    // Minotaur spawns in a random opposite corner (Top-Right or Bottom-Left)
-    // so it sweeps across the map hunting the player rather than camping the Exit.
-    const spawnTopRight = Math.random() > 0.5;
-    gameState.minotaur = {
-        x: spawnTopRight ? mapSize - 3 : 2,
-        y: spawnTopRight ? 2 : mapSize - 3,
-        active: mapSize >= 15,
-        lastMoveTime: Date.now() + 5000, // 5 second grace period
-        targetInterval: 1500
-    };
+    // Spawn Horde Scaled by Difficulty Key (Allows User to freely modify grid sizes)
+    gameState.minotaurs = [];
+    let numHunters = 0;
+    if (level === 'hard') numHunters = 6;
+    else if (level === 'medium') numHunters = 3;
+    else if (level === 'easy') numHunters = 1;
+    else numHunters = 0; // Demo
+    
+    for (let i = 0; i < numHunters; i++) {
+        let sx, sy;
+        // Spawn them randomly far from the starting area (x<5, y<5)
+        do {
+            sx = 2 + Math.floor(Math.random() * (mapSize - 4));
+            sy = 2 + Math.floor(Math.random() * (mapSize - 4));
+        } while (gameState.map[sy][sx] !== 0 || (sx < 5 && sy < 5));
+        
+        gameState.minotaurs.push({
+            id: i,
+            x: sx + 0.5,
+            y: sy + 0.5,
+            active: true,
+            lastMoveTime: Date.now() + 5000 + (i * 1000), // Stagger graceful spawns
+            targetInterval: level === 'hard' ? 800 : 1500, 
+            behavior: level === 'hard' ? 'hunt' : 'investigate',
+            investigateTarget: null // Used for wandering
+        });
+    }
     
     // Generate BFS Pathing tree for Acoustic Guide
     gameState.parentMap = typeof buildPathMap === 'function' ? buildPathMap(
@@ -274,51 +291,79 @@ function loseGame() {
     }, 1000);
 }
 
-function updateMinotaur(now) {
-    const m = gameState.minotaur;
+function updateMinotaurs(now) {
+    if (!gameState.minotaurs || !gameState.gameActive) return;
+    
     const p = gameState.player;
-    if (!m || !m.active || !gameState.gameActive) return;
     
-    // Check caught condition
-    if (Math.floor(m.x) === Math.floor(p.x) && Math.floor(m.y) === Math.floor(p.y)) {
-        triggerJumpScare();
-        return;
-    }
-    
-    if (now - m.lastMoveTime > m.targetInterval) {
-        m.lastMoveTime = now;
+    gameState.minotaurs.forEach(m => {
+        if (!m.active) return;
         
-        const path = typeof findShortestPath === 'function' ? 
-            findShortestPath(gameState.map, Math.floor(m.x), Math.floor(m.y), Math.floor(p.x), Math.floor(p.y)) : null;
+        // Check caught condition
+        if (Math.floor(m.x) === Math.floor(p.x) && Math.floor(m.y) === Math.floor(p.y)) {
+            triggerJumpScare();
+            return;
+        }
+        
+        if (now - m.lastMoveTime > m.targetInterval) {
+            m.lastMoveTime = now;
             
-        if (path && path.length > 0) {
-            const mode = typeof getMovementMode === 'function' ? getMovementMode() : 'walk';
+            let path = null;
+            if (m.behavior === 'hunt') {
+                path = typeof findShortestPath === 'function' ? 
+                    findShortestPath(gameState.map, Math.floor(m.x), Math.floor(m.y), Math.floor(p.x), Math.floor(p.y)) : null;
+            } else if (m.behavior === 'investigate') {
+                if (m.investigateTarget) {
+                    // Path to the source of the noise
+                    path = typeof findShortestPath === 'function' ? 
+                        findShortestPath(gameState.map, Math.floor(m.x), Math.floor(m.y), Math.floor(m.investigateTarget.x), Math.floor(m.investigateTarget.y)) : null;
+                    
+                    // Reached noise origin? Clear it and resume wandering
+                    if (!path || path.length === 0) {
+                        m.investigateTarget = null;
+                    }
+                } 
+                
+                // Random wander logic when no recent noises
+                if (!m.investigateTarget) {
+                    const dirs = [[0, -1], [0, 1], [1, 0], [-1, 0]];
+                    const validMoves = [];
+                    for(let [dx,dy] of dirs) {
+                        if (gameState.map[Math.floor(m.y) + dy][Math.floor(m.x) + dx] === 0) {
+                            validMoves.push({x: Math.floor(m.x) + dx, y: Math.floor(m.y) + dy});
+                        }
+                    }
+                    if (validMoves.length > 0) {
+                        const step = validMoves[Math.floor(Math.random() * validMoves.length)];
+                        m.x = step.x + 0.5;
+                        m.y = step.y + 0.5;
+                    }
+                }
+            }
             
-            // If creeping, minotaur might lose scent (50% chance to not move)
-            if (mode === 'creep' && Math.random() > 0.5) {
-                // Lost scent, wanders aimlessly (skips tracking step)
-            } else {
+            if (path && path.length > 0) {
                 const nextStep = path[0];
                 m.x = nextStep.x + 0.5;
                 m.y = nextStep.y + 0.5;
             }
+            
+            if (typeof playMinotaurStep === 'function') {
+                playMinotaurStep(m);
+            }
+            
+            // Check caught again after moving
+            if (Math.floor(m.x) === Math.floor(p.x) && Math.floor(m.y) === Math.floor(p.y)) {
+                triggerJumpScare();
+            }
         }
         
-        if (typeof playMinotaurStep === 'function') {
-            playMinotaurStep(m);
+        // Dynamically govern speeds based on AI state
+        if (m.behavior === 'hunt') {
+            m.targetInterval = 800; // Hard mode monsters never tire
+        } else {
+            m.targetInterval = m.investigateTarget ? 900 : 2200; // Aggro speed vs Wander crawl
         }
-        
-        // Check again after moving
-        if (Math.floor(m.x) === Math.floor(p.x) && Math.floor(m.y) === Math.floor(p.y)) {
-            triggerJumpScare();
-        }
-    }
-    
-    // Dynamically update aggro interval based on player state
-    const mode = typeof getMovementMode === 'function' ? getMovementMode() : 'walk';
-    if (mode === 'run') m.targetInterval = 800;
-    else if (mode === 'walk') m.targetInterval = 1500;
-    else m.targetInterval = 3000;
+    });
 }
 
 function triggerJumpScare() {
@@ -482,19 +527,22 @@ function drawDebugMap() {
     mapCtx.arc(rayEndX * cellSize, rayEndY * cellSize, 4, 0, Math.PI * 2);
     mapCtx.fill();
     
-    // Draw Minotaur
-    if (gameState.minotaur && gameState.minotaur.active) {
-        mapCtx.shadowColor = '#ff0000';
-        mapCtx.fillStyle = '#ff0000';
-        mapCtx.beginPath();
-        mapCtx.arc(
-            gameState.minotaur.x * cellSize,
-            gameState.minotaur.y * cellSize,
-            cellSize * 0.4,
-            0,
-            Math.PI * 2
-        );
-        mapCtx.fill();
+    // Draw Minotaurs
+    if (gameState.minotaurs) {
+        gameState.minotaurs.forEach(m => {
+            if (!m.active) return;
+            mapCtx.shadowColor = '#ff0000';
+            mapCtx.fillStyle = '#ff0000';
+            mapCtx.beginPath();
+            mapCtx.arc(
+                m.x * cellSize,
+                m.y * cellSize,
+                cellSize * 0.4,
+                0,
+                Math.PI * 2
+            );
+            mapCtx.fill();
+        });
     }
 
     // Draw player
@@ -558,8 +606,8 @@ function gameLoop(currentTime) {
             updateListenerPosition();
             checkWinCondition();
             
-            if (typeof updateMinotaur === 'function') {
-                updateMinotaur(Date.now());
+            if (typeof updateMinotaurs === 'function') {
+                updateMinotaurs(Date.now());
             }
             
             drawDebugMap();
@@ -576,6 +624,15 @@ function gameLoop(currentTime) {
                     if (currentTime - lastFootstepTime > interval) {
                         if (typeof playFootstep === 'function') playFootstep();
                         lastFootstepTime = currentTime;
+                        
+                        // Alert investigating minotaurs to footprint location
+                        if (mode !== 'creep' && gameState.minotaurs) {
+                            gameState.minotaurs.forEach(m => {
+                                if (m.behavior === 'investigate') {
+                                    m.investigateTarget = {x: gameState.player.x, y: gameState.player.y};
+                                }
+                            });
+                        }
                     }
                 } else {
                     lastFootstepTime = 0; // Reset tracking immediately to ensure first step plays instantly
@@ -666,9 +723,14 @@ function startGame(level = 'easy') {
                     gameState.energy -= 2;
                     if (gameState.energy <= 0) loseGame();
                     
-                    if (gameState.minotaur && gameState.minotaur.active) {
-                         gameState.minotaur.lastMoveTime = 0; // Force immediate step
-                         gameState.minotaur.targetInterval = 600; // Hyper aggro
+                    // Massive Sonar Pulse alerts all Minotaurs instantly
+                    if (gameState.minotaurs) {
+                        gameState.minotaurs.forEach(m => {
+                            if (m.behavior === 'investigate') {
+                                m.investigateTarget = {x: gameState.player.x, y: gameState.player.y};
+                            }
+                            m.lastMoveTime = 0; // Force immediate leap
+                        });
                     }
                     
                     const pingSpan = document.getElementById('hud-ping');
@@ -698,5 +760,20 @@ function startGame(level = 'easy') {
         console.log('💡 Press SPACEBAR for sonar');
     }, 100);
 }
+
+// Sync the Difficulty Buttons UI Badges with the JS Size Configurations on load
+window.addEventListener('DOMContentLoaded', () => {
+    if (typeof LEVELS !== 'undefined') {
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            const lvlKey = btn.getAttribute('data-level');
+            if (LEVELS[lvlKey]) {
+                const badge = btn.querySelector('.size-badge');
+                if (badge) {
+                    badge.textContent = `${LEVELS[lvlKey].size}×${LEVELS[lvlKey].size}`;
+                }
+            }
+        });
+    }
+});
 
 console.log('✅ Game module loaded');
