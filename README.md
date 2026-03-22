@@ -155,7 +155,7 @@ EchoWalker/
 - GitHub: [@KrunalKadtan](https://github.com/KrunalKadtan)
 
 **Vansh Bhanushali**
-- Github: @vanshapple
+- Github: [@vanshapple](https://github.com/vanshapple)
 
 - Project: [EchoWalker](https://github.com/KrunalKadtan/EchoWalker)
 
