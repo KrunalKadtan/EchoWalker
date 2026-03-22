@@ -234,7 +234,7 @@ function playVictorySound() {
     
     if (!audioCtx) return;
     
-    console.log('🎉 Playing victory sound');
+    console.log('Playing victory sound');
     
     const now = audioCtx.currentTime;
     
@@ -384,4 +384,4 @@ function playSonarError() {
     osc.stop(now + 0.05);
 }
 
-console.log('✅ Sound effects module loaded');
+console.log('Sound effects module loaded');

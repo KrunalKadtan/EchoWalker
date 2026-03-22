@@ -32,10 +32,10 @@
       <div class="glass-panel">
         <h2>SELECT DIFFICULTY</h2>
         <div class="difficulty-grid">
-          <button class="difficulty-btn demo" data-level="demo">DEMO <span class="size-badge">7×7</span></button>
-          <button class="difficulty-btn easy" data-level="easy">EASY <span class="size-badge">11×11</span></button>
-          <button class="difficulty-btn medium" data-level="medium">MEDIUM <span class="size-badge">15×15</span></button>
-          <button class="difficulty-btn hard" data-level="hard">HARD <span class="size-badge">21×21</span></button>
+          <button class="difficulty-btn demo" data-level="demo">DEMO <span class="size-badge">11×11</span></button>
+          <button class="difficulty-btn easy" data-level="easy">EASY <span class="size-badge">20×20</span></button>
+          <button class="difficulty-btn medium" data-level="medium">MEDIUM <span class="size-badge">30×30</span></button>
+          <button class="difficulty-btn hard" data-level="hard">HARD <span class="size-badge">40×40</span></button>
         </div>
       </div>
     </div>
@@ -71,7 +71,7 @@
             const level = btn.getAttribute('data-level');
             const bestTime = localStorage.getItem('echo_best_' + level);
             
-            // Remove existing record div if it exists
+            
             const existing = btn.querySelector('.best-time-display');
             if (existing) existing.remove();
             
@@ -79,7 +79,7 @@
                 const bestDiv = document.createElement('div');
                 bestDiv.className = 'best-time-display';
                 bestDiv.style.cssText = 'font-size: 14px; margin-top: 8px; color: #0ff; text-shadow: 0 0 5px rgba(0,255,255,0.5); letter-spacing: 1px; font-weight: 600;';
-                bestDiv.innerHTML = `🏆 BEST: ${bestTime}s`;
+                bestDiv.innerHTML = `BEST: ${bestTime}s`;
                 btn.appendChild(bestDiv);
             }
         });

@@ -22,7 +22,7 @@ function fireSonarPing(player, map) {
     // Cast ray ONLY in front direction (max 10 tiles)
     const frontDistance = castRay(player.x, player.y, player.angle, map, 10);
     
-    console.log(`📡 Sonar: ${frontDistance.toFixed(2)} tiles ahead`);
+    console.log(`Sonar: ${frontDistance.toFixed(2)} tiles ahead`);
     
     playEchoSonar(frontDistance);
     
@@ -79,4 +79,4 @@ function playEchoSonar(distance) {
     console.log(`  → Echo delay: ${(echoDelay * 1000).toFixed(0)}ms`);
 }
 
-console.log('✅ Sonar system loaded (5 tile range)');
+console.log('Sonar system loaded (5 tile range)');

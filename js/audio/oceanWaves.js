@@ -17,7 +17,7 @@ function createOceanWaves() {
     
     if (!audioCtx) return;
     
-    console.log('🌊 Creating ocean wave soundscape...');
+    console.log('Creating ocean wave soundscape...');
     
     // 3D Panner for exit
     exitPanner = audioCtx.createPanner();
@@ -40,7 +40,7 @@ function createOceanWaves() {
     createWaveLayer(0.5, 400, 1200, 0.4);
     createWaveLayer(0.8, 800, 2000, 0.3);
     
-    console.log('✅ Ocean waves created');
+    console.log('Ocean waves created');
     
     scheduleWaveCrash();
 }
@@ -184,4 +184,4 @@ function getExitPanner() {
 // Expose nodes for cleanup
 window.oceanWaveNodes = oceanWaveNodes;
 
-console.log('✅ Ocean waves module loaded');
+console.log('Ocean waves module loaded');

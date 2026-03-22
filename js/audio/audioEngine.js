@@ -95,7 +95,7 @@ function createReverbBuffer() {
         }
     }
     reverbNode.buffer = impulse;
-    console.log('🔊 Synthetic cavern reverb generated');
+    console.log('Synthetic cavern reverb generated');
 }
 
 console.log('Audio engine module loaded');

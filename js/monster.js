@@ -1,12 +1,3 @@
-/**
- * Monster AI Controller
- * Authors: Krunal Kadtan & Vansh
- *
- * Manages the Monster Horde: spawning, AI state machine (Investigate / Hunt),
- * BFS pathfinding, audio spatialization, and jump scare death sequence.
- *
- * Depends on: game.js (gameState), maze.js (findShortestPath), sounds.js (playMonsterStep, playJumpScareLevel)
- */
 
 // ─────────────────────────────────────────────
 // SPAWN
@@ -46,7 +37,7 @@ function spawnMonsters(level, mapSize) {
         });
     }
 
-    console.log(`👹 Spawned ${count} monster(s) — behavior: ${level === 'hard' ? 'HUNT' : 'INVESTIGATE'}`);
+    console.log(`Spawned ${count} monster(s) — behavior: ${level === 'hard' ? 'HUNT' : 'INVESTIGATE'}`);
 }
 
 // ─────────────────────────────────────────────
@@ -198,7 +189,7 @@ function triggerJumpScare() {
     const gameHUD = document.getElementById('gameHUD');
     if (gameHUD) gameHUD.classList.add('hidden');
 
-    console.log('🩸 SLAIN BY MONSTER - GAME OVER');
+    console.log('SLAIN BY MONSTER - GAME OVER');
 }
 
-console.log('✅ Monster module loaded');
+console.log('Monster module loaded');

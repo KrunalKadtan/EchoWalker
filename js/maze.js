@@ -13,7 +13,7 @@ const LEVELS = {
  * @returns {Array} 2D array representing the maze (0 = path, 1 = wall)
  */
 function generateMaze(size) {
-    console.log(`🔨 Generating ${size}×${size} maze...`);
+    console.log(`Generating ${size}×${size} maze...`);
     
     // Create map filled with walls
     let map = Array.from({ length: size }, () => new Array(size).fill(1));
@@ -102,7 +102,7 @@ function generateMaze(size) {
         }
     }
     
-    console.log('✅ Maze generated successfully');
+    console.log('Maze generated successfully');
     console.log('   Start area (1-3, 1-3) forced open');
     console.log('   Exit area forced open');
     console.log(`   Braid Loops inserted: ${Math.floor((size * size) / 18) - loopsToCreate}`);
@@ -189,4 +189,4 @@ function findShortestPath(map, startX, startY, targetX, targetY) {
     return path.reverse();
 }
 
-console.log('✅ Maze module loaded');
+console.log('Maze module loaded');

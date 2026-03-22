@@ -58,4 +58,4 @@ function castMultipleRays(player, map) {
     return distances;
 }
 
-console.log('✅ Raycasting utilities loaded (FIXED)');
+console.log('Raycasting utilities loaded (FIXED)');

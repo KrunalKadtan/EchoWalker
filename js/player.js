@@ -248,7 +248,7 @@ function initKeyboardControls(onMove, onRotate, onSonar, onModeChange) {
         }
     });
     
-    console.log('⌨️ Keyboard controls initialized');
+    console.log('Keyboard controls initialized');
 }
 
-console.log('✅ Player module loaded');
+console.log('Player module loaded');
