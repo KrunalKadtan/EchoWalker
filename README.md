@@ -7,158 +7,152 @@
 
 ## Overview
 
-**EchoWalker** is an immersive web-based audio maze game designed to be navigated using 3D spatial audio instead of visual cues. Players are trapped in an underground cave system and must follow the sound of ocean waves and seabird chirps to find the exit, using sonar echolocation to detect walls.
+**EchoWalker** is a browser-based maze survival game where the screen stays intentionally blank. Players navigate procedurally generated labyrinths using only synthesized 3D spatial audio — a guiding ocean wave beacon, sonar echolocation, and audio-only AI enemies called Monsters. No vision. No visual map. Just sound.
 
-### Key Features
+Built with **pure Vanilla JavaScript (ES6+)**, **HTML5**, and **CSS3** — no frameworks, no npm, no build process.
 
-- **6 Difficulty Levels**: From 7×7 Demo to 31×31 Nightmare
-- **3D Spatial Audio**: HRTF-based binaural sound positioning
-- **Sonar Echolocation**: Press SPACEBAR for 4-direction wall detection
-- **Realistic Ocean Waves**: Multi-layer synthesis with LFO modulation
-- **Procedural Seabirds**: Random chirps positioned near the exit
-- **Dynamic Footsteps**: Varies by movement speed (Creep/Walk/Run)
-- **Tank Controls**: WASD for intuitive navigation
+---
 
-## Quick Start
+## Gameplay
 
-### Play Online
-**[Click here to play](https://krunalkadtan.github.io/EchoWalker/)** (Headphones recommended!)
+You are trapped in an underground labyrinth. Find the exit by listening.
 
-### Run Locally
-```bash
-# Clone the repository
-git clone https://github.com/KrunalKadtan/EchoWalker.git
-cd EchoWalker
+| Audio Cue | What it means |
+|---|---|
+| **Ocean waves** | Getting louder = moving toward the exit |
+| **Sonar echo** | Short delay = wall is near. Long delay = open space ahead |
+| **Heavy stomping** | A Monster is nearby — locate it by the direction of the sound |
 
-# Open index.html in your browser
-# (No build process required - pure vanilla JavaScript!)
-```
+**The Monster Horde** hunts by sound. Walk or run and they hear your footsteps. Ping sonar and they come running. Switch to **Creep mode** to go silent and shake them off.
+
+---
 
 ## Controls
 
 | Key | Action |
-|-----|--------|
-| **W** | Move Forward |
-| **S** | Move Backward |
-| **A** | Rotate Left |
-| **D** | Rotate Right |
-| **SPACEBAR** | Fire Sonar Ping |
-| **Q** | Cycle Speed Mode (Creep → Walk → Run) |
-| **V** | Toggle View Mode (Coming soon) |
+|---|---|
+| **W / S** | Move Forward / Backward |
+| **A / D** | Rotate Left / Right |
+| **SPACEBAR** | Fire Sonar Ping (costs 2% energy) |
+| **Q** | Cycle Speed: Creep → Walk → Run |
+| **M** | Toggle Neon Debug Map |
+
+---
+
+## Difficulty Levels
+
+| Difficulty | Maze Size | Monsters | Monster Behavior |
+|---|---|---|---|
+| Demo | 11×11 | 0 | — |
+| Easy | 20×20 | 1 | Investigate (reacts to noise) |
+| Medium | 30×30 | 3 | Investigate (reacts to noise) |
+| Hard | 40×40 | 6 | Hunt (tracks you relentlessly) |
+
+**Investigate mode:** Monsters wander randomly until they hear a footstep or sonar ping, then converge on the sound's origin. Creeping makes you silent — they lose your trail.
+
+**Hunt mode:** Monsters path directly toward you at all times via BFS. No stealth, no escape.
+
+---
+
+## Features
+
+- **Zero dependencies** — No npm, no CDN, no build pipeline. Open `index.html` and play.
+- **Procedural Maze Generation** — Recursive Backtracking with a Braid Labyrinth post-processor that introduces loops for stealth-based evasion.
+- **BFS Acoustic Path Guide** — The ocean beacon is repositioned along the BFS shortest solution path each frame, curving around corners instead of through walls.
+- **HRTF 3D Spatial Audio** — All monster and exit sounds spatialized using the Web Audio API's HRTF PannerNode for true binaural positioning.
+- **Psychoacoustic Monster Audio** — Sub-bass stomps (unlocalizable by human ears alone) are layered with a 3 kHz high-frequency crunch transient, making each monster's position pinpointable in 3D space.
+- **Synthesized Cavern Reverb** — A 2.5-second exponential-decay impulse response generates a realistic underground acoustic environment in real time.
+- **Sonar Echolocation** — Echo return delay and pitch are mathematically calibrated to physical wall distance (100 ms → 1000 ms; 1400 Hz → 800 Hz).
+- **Energy Battery System** — Collisions and sonar pings drain energy. Zero energy = game over.
+- **High Score Persistence** — Personal best times saved to `localStorage` per difficulty.
+- **Premium Glassmorphism UI** — Animated fade transitions, neon debug map, live HUD (speed mode, sonar status, energy).
+
+---
+
+## Quick Start
+
+### Play Online
+**[Click here to play](https://krunalkadtan.github.io/EchoWalker/)** — Headphones strongly recommended!
+
+---
 
 ## Project Structure
+
 ```
 EchoWalker/
-├── index.html              # Main entry point
+├── index.html              # Entry point, UI screens, HUD
 ├── css/
-│   └── style.css          # Stylesheets
+│   └── style.css           # Glassmorphism UI, animations
 ├── js/
-│   ├── game.js            # Main game controller
-│   ├── maze.js            # Maze generation (recursive backtracking)
-│   ├── player.js          # Movement & collision detection
+│   ├── game.js             # Game controller, game loop, debug map, win/lose
+│   ├── maze.js             # Maze generation (Recursive Backtracking + Braid) + BFS engines
+│   ├── monster.js          # Monster AI (Investigate / Hunt), jump scare, noise alerts
+│   ├── player.js           # Movement, collision detection, speed modes
 │   ├── audio/
-│   │   ├── audioEngine.js # Web Audio API initialization
-│   │   ├── oceanWaves.js  # Multi-layer wave synthesis
-│   │   ├── sonar.js       # Echolocation system
-│   │   └── sounds.js      # Footsteps, collisions, victory
+│   │   ├── audioEngine.js  # AudioContext, master gain, cavern reverb
+│   │   ├── oceanWaves.js   # Multi-layer wave synthesis + BFS acoustic guide
+│   │   ├── sonar.js        # Echolocation system
+│   │   └── sounds.js       # Footsteps, monster horde audio, jump scare
 │   └── utils/
-│       └── raycasting.js  # Wall detection utilities
-├── assets/
-│   └── screenshots/       # Game screenshots
-├── docs/
-│   └── TESTING.md         # Test documentation
-└── README.md              # This file
+│       └── raycasting.js   # DDA wall detection algorithm
+├── screenshots/            # Game screenshots
+└── EchoWalker_Mini_Project_Report.docx
 ```
 
-## Technical Details
+---
 
-### Technologies Used
-- **Pure Vanilla JavaScript (ES6+)** - No frameworks or libraries
-- **Web Audio API** - HRTF spatial audio, LFO modulation, procedural synthesis
-- **HTML5 Canvas** - Rendering (view modes)
-- **CSS3** - Styling and animations
+## Technical Architecture
 
-### Audio Architecture
+### Audio Engine (`audioEngine.js`)
+- Creates the `AudioContext` and master gain chain
+- Synthesizes a 2.5-second stereo cavern reverb impulse response using exponentially-decaying white noise
+- Generates a 2-second white noise PCM buffer used by all wave synthesis modules
 
-#### Ocean Wave Synthesis
-- **3 Frequency Layers**:
-  - Low (200-800Hz): Deep rumble
-  - Mid (400-1200Hz): Main wash
-  - High (800-2000Hz): Surface splash
-- **LFO Modulation**: 0.3Hz, 0.5Hz, 0.8Hz for wave motion
-- **Random Crashes**: 3-7 second intervals
+### Ocean Wave Synthesizer (`oceanWaves.js`)
+Three simultaneous LFO-modulated bandpass noise layers:
 
-#### Sonar Echolocation
-- **4-Direction Raycasting**: Front, Left, Right, Back
-- **Distinct Frequencies**:
-  - Front: 600Hz (center pan)
-  - Left: 450Hz (left pan)
-  - Right: 750Hz (right pan)
-  - Back: 300Hz (center pan)
-- **Distance Modulation**: Pitch ↑ and volume ↑ when closer to walls
+| Layer | LFO Rate | Freq Range | Effect |
+|---|---|---|---|
+| Low | 0.3 Hz | 200–800 Hz | Deep ocean rumble |
+| Mid | 0.5 Hz | 400–1200 Hz | Main wave wash |
+| High | 0.8 Hz | 800–2000 Hz | Surface ripple |
 
-#### 3D Spatial Audio
-- **HRTF Panning**: True binaural audio
-- **Distance Model**: Inverse rolloff
-- **Listener Orientation**: Updates with player rotation
+The `exitPanner` (HRTF 3D PannerNode) is repositioned each frame to a BFS waypoint 6 hops ahead of the player along the solution path, with 2% exponential interpolation per frame for smooth corner transitions.
 
-### Game Logic
+### Sonar Echolocation (`sonar.js`)
+- DDA raycasting measures forward wall distance
+- Outgoing ping: triangle wave 400→100 Hz sweep, 100 ms
+- Echo return delay: `0.1 + (distance / 10) × 0.9` seconds
+- Echo pitch: `1400 − (distance / 10) × 600` Hz
+- 1-second cooldown between pings; error sound on early re-trigger
 
-#### Maze Generation
-- **Algorithm**: Recursive backtracking
-- **Guaranteed Solvable**: Always a valid path from start to exit
-- **Difficulty Scaling**: 7×7 to 31×31 tiles
+### Monster (`monster.js`)
+- `spawnMonsters(level)` — populates the monster array based on difficulty
+- `updateMonsters(now)` — per-tick AI state machine (Investigate / Hunt / Wander)
+- `alertMonsters(x, y)` — broadcast acoustic disturbance to all Investigators
+- `triggerJumpScare()` — audio cut + FM screech + SYSTEM FAILURE screen
+- Each monster has an independent HRTF `PannerNode`; psychoacoustic 3 kHz crunch layered over sub-bass stomp for accurate spatial localization
 
-#### Collision Detection
-- **Directional Awareness**: Detects front/back/left/right collisions
-- **Sub-tile Precision**: 0.1 tile step resolution
-- **Audio Feedback**: Thud sound on impact
+### Maze Generation (`maze.js`)
+1. **Recursive Backtracking** — perfect maze with exactly one path between any two tiles
+2. **Braid Labyrinth post-processor** — dissolves ~N²/18 walls to create bypass loops for stealth evasion
+3. **`buildPathMap()`** — BFS solution tree from exit to all tiles for the acoustic guide
+4. **`findShortestPath()`** — point-to-point BFS for monster navigation
+
+---
 
 ## Team
 
 | Name | Role | Contributions |
-|------|------|---------------|
-| **Krunal Kadtan** | Backend/Audio Engineer | Core game engine, audio systems, maze generation, collision detection, sonar system |
-| **Vansh** | Frontend/UX Designer | UI/UX design, visual feedback systems, documentation, deployment |
-
-## 📊 Development Timeline
-
-### Week 1-2: Foundation
-- ✅ Maze generation algorithm
-- ✅ Player movement system
-- ✅ Collision detection
-
-### Week 3-4: Audio Engine
-- ✅ Web Audio API initialization
-- ✅ Multi-layer ocean wave synthesis
-- ✅ 3D spatial audio positioning
-
-### Week 5-6: Features
-- ✅ Sonar echolocation system
-- ✅ Footstep synthesis
-- ✅ Victory detection
-
-### Week 7: Polish & Testing
-- ✅ Code optimization
-- ✅ Testing across browsers
-- ✅ Documentation
-
-## 🙏 Acknowledgments
-
-- Web Audio API Documentation
-- Recursive Backtracking Algorithm Research
-- HRTF Spatial Audio Research
-
-## 📞 Contact
-
-**Krunal Kadtan**
-- GitHub: [@KrunalKadtan](https://github.com/KrunalKadtan)
-
-**Vansh Bhanushali**
-- Github: [@vanshapple](https://github.com/vanshapple)
-
-- Project: [EchoWalker](https://github.com/KrunalKadtan/EchoWalker)
+|---|---|---|
+| **Krunal Kadtan** | Developer | Game engine, audio systems, maze generation, monster AI, sonar, BFS acoustic guide |
+| **Vansh Bhanushali** | Developer | UI/UX design, visual systems, HUD, glassmorphism, documentation, deployment |
 
 ---
 
-**Made with 🎧 for accessibility and immersion**
+## Acknowledgments
+
+- W3C Web Audio API Specification
+- Jamis Buck — Recursive Backtracking Maze Algorithms
+- Jens Blauert — *Spatial Hearing: The Psychophysics of Human Sound Localization*
+

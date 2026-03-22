@@ -78,7 +78,7 @@ function generateMaze(size) {
         }
     }
     
-    // CREATE BRAID LOOPS (Bypass corridors for Minotaur stealth)
+    // CREATE BRAID LOOPS (Bypass corridors for Monster stealth)
     // By randomly removing walls that separate two corridors, we convert the Perfect Maze 
     // into a Braid Maze, introducing circular loops so players don't get trapped head-on.
     let loopsToCreate = Math.floor((size * size) / 18); // ~12 loops for a 15x15 map

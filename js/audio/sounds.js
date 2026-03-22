@@ -41,16 +41,16 @@ function playFootstep() {
     noise.stop(now + 0.3);
 }
 
-let minotaurPanners = {};
+let monsterPanners = {};
 
-function playMinotaurStep(minotaur) {
+function playMonsterStep(monster) {
     const audioCtx = getAudioContext();
     const master = getMasterGain();
     const reverb = typeof getReverbNode === 'function' ? getReverbNode() : null;
     
     if (!audioCtx || !master) return;
     
-    if (!minotaurPanners[minotaur.id]) {
+    if (!monsterPanners[monster.id]) {
         let panner = audioCtx.createPanner();
         panner.panningModel = 'HRTF';
         panner.distanceModel = 'exponential';
@@ -60,16 +60,16 @@ function playMinotaurStep(minotaur) {
         
         panner.connect(master);
         if (reverb) panner.connect(reverb);
-        minotaurPanners[minotaur.id] = panner;
+        monsterPanners[monster.id] = panner;
     }
     
-    const panner = minotaurPanners[minotaur.id];
+    const panner = monsterPanners[monster.id];
     const now = audioCtx.currentTime;
     
-    // Snap to minotaur's exact physical coordinates smoothly
-    panner.positionX.setTargetAtTime(minotaur.x * 20, now, 0.1); 
+    // Snap to monster's exact physical coordinates smoothly
+    panner.positionX.setTargetAtTime(monster.x * 20, now, 0.1); 
     panner.positionY.value = 0;
-    panner.positionZ.setTargetAtTime(minotaur.y * 20, now, 0.1);
+    panner.positionZ.setTargetAtTime(monster.y * 20, now, 0.1);
     
     // Low, distorted stomp with square growl
     const osc = audioCtx.createOscillator();
