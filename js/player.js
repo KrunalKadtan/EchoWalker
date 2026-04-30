@@ -117,7 +117,7 @@ function movePlayer(player, map, direction) {
  * @param {string} direction - 'left' or 'right'
  */
 function rotatePlayer(player, direction) {
-    const rotationSpeed = 0.25;
+    const rotationSpeed = 2.5;
     
     if (direction === 'left') {
         player.angle -= rotationSpeed;
